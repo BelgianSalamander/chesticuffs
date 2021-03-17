@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CreateItem implements Listener {
+    //As soon as an item is crafted or smelted it is registered and given the stats and lore it needs
+
     @EventHandler
     public void OnItemCraft(CraftItemEvent e){
         ItemHandler.registerItem(e.getCurrentItem());

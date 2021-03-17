@@ -4,9 +4,10 @@ import org.bukkit.NamespacedKey;
 import salamander.chesticuffs.Chesticuffs;
 
 public class ChestKeys {
-    static public NamespacedKey playersInChestKey, roundNumber, phaseNumber;
+    static public NamespacedKey idKey, playersInChestKey;
 
     static public void init(){
-        playersInChestKey = new NamespacedKey(Chesticuffs.getPlugin(), "players_in_chest");
+        idKey = new NamespacedKey(Chesticuffs.getPlugin(), "GameID");
+        playersInChestKey = new NamespacedKey(Chesticuffs.getPlugin(), "PlayersInChest");
     }
 }

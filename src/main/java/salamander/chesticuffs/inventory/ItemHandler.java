@@ -64,6 +64,8 @@ public class ItemHandler {
 
     static public void init(){
         initKeys();
+        //Load iteminfo from JSON file
+        //The loading from file code is copied from the internet
         JSONParser parser = new JSONParser();
         InputStream is = ItemHandler.class.getResourceAsStream("/iteminfo/items.json");
         try{
@@ -76,6 +78,8 @@ public class ItemHandler {
         }
         System.out.println(itemData.values());
         JSONObject newItemData = (JSONObject) itemData.clone();
+
+        //Create duplicate info for "similar" items for easy access
         Iterator<JSONObject> values = itemData.values().iterator();
         while(values.hasNext()){
             JSONObject item = values.next();
@@ -95,6 +99,7 @@ public class ItemHandler {
     }
 
     static private void initKeys(){
+        //Setup all namespacedkeys to store an item's info
         typeKey = new NamespacedKey(Chesticuffs.getPlugin(), "type");
         damageKey = new NamespacedKey(Chesticuffs.getPlugin(), "damage");
         defenceKey = new NamespacedKey(Chesticuffs.getPlugin(), "defence");
@@ -107,9 +112,11 @@ public class ItemHandler {
     }
 
     static public void registerItem(ItemStack item){
+        //Check if there actually is an item
         if(item == null || item.getType() == Material.AIR) return;
         ItemMeta meta = item.getItemMeta();
         System.out.println(item.getType().toString());
+        //If item does not have a meta, create one
         if(meta == null) {
             System.out.println(item.getType().toString());
             meta = Bukkit.getServer().getItemFactory().getItemMeta(item.getType());
@@ -118,12 +125,14 @@ public class ItemHandler {
             if(itemData.containsKey(item.getType().toString())){
                 JSONObject itemStats = (JSONObject) itemData.get(item.getType().toString());
                 if(itemStats.get("type").equals("item")){
+                    //Get stats from json
                     short ATK = (short) (long) itemStats.get("ATK");
                     short DEF = (short) (long) itemStats.get("DEF");
                     short HP = (short) (long) itemStats.get("HP");
                     JSONArray traits = (JSONArray) itemStats.get("traits");
                     String flavor = (String) itemStats.get("flavor");
 
+                    //Give the actual item those stats
                     meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "item");
                     meta.getPersistentDataContainer().set(damageKey, PersistentDataType.SHORT, ATK);
                     meta.getPersistentDataContainer().set(defenceKey, PersistentDataType.SHORT, DEF);
@@ -131,11 +140,13 @@ public class ItemHandler {
                     meta.getPersistentDataContainer().set(traitsKey, PersistentDataType.STRING, String.join(",", traits));
                     meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
                 }else if(itemStats.get("type").equals("core")){
+                    //Get stats from json
                     short HP = (short) (long) itemStats.get("HP");
                     String buff = (String) itemStats.get("buff");
                     String debuff = (String) itemStats.get("debuff");
                     String flavor = (String) itemStats.get("flavor");
 
+                    //Give the actual item those stats
                     meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "core");
                     meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, HP);
                     meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
@@ -150,6 +161,8 @@ public class ItemHandler {
     }
 
     static public void setLore(ItemStack item){
+        /*Sets the lore for an item. This is a seperate function from registerItem because this will be called
+        multiple times when the itme gets changed in a game (e.g it takes damage)*/
         if(item == null){
             return;
         }
@@ -157,6 +170,7 @@ public class ItemHandler {
         if(meta == null){
             return;
         }
+        //Check if item is registered. (Unregistered items don't have a "type" key)
         if(!meta.getPersistentDataContainer().has(typeKey, PersistentDataType.STRING)){
             return;
         }
@@ -211,6 +225,7 @@ public class ItemHandler {
 
     static private String readFromInputStream(InputStream inputStream)
             throws IOException {
+        //From internet
         StringBuilder resultStringBuilder = new StringBuilder();
         try (BufferedReader br
                      = new BufferedReader(new InputStreamReader(inputStream))) {

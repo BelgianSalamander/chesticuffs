@@ -9,6 +9,7 @@ import salamander.chesticuffs.Chesticuffs;
 import salamander.chesticuffs.inventory.ItemHandler;
 
 public class RegisterItem implements CommandExecutor {
+    //Will register the item the player is holding
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if(!(sender instanceof Player)){
