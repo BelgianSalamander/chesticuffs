@@ -1,0 +1,43 @@
+{
+  "OAK_PLANKS" : {
+    "similar" : [
+      "BIRCH_PLANKS",
+      "ACACIA_PLANKS",
+      "DARK_OAK_PLANKS",
+      "JUNGLE_PLANKS",
+      "SPRUCE_PLANKS"
+    ],
+    "type" : "item",
+    "ATK" : 1,
+    "DEF" : 1,
+    "HP" : 2,
+    "traits" : ["flammable"],
+    "flavor" : "P L A N K"
+  },
+
+  "STONE" : {
+    "type" : "item",
+    "ATK" : 2,
+    "DEF" : 1,
+    "HP" : 1,
+    "traits" : [],
+    "flavor" : "Rock"
+  },
+
+  "EMERALD" : {
+    "type" : "item",
+    "ATK" : 2,
+    "DEF" : 1,
+    "HP" : 2,
+    "traits" : [],
+    "flavor" : "Shiny!"
+  },
+
+  "IRON_BLOCK" : {
+    "type" : "core",
+    "HP" : 20,
+    "buff" : "Every item played gets +1 HP",
+    "debuff" : "",
+    "flavor" : "Ironic"
+  },
+}

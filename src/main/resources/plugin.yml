@@ -1,0 +1,8 @@
+name: Chesticuffs
+version: ${project.version}
+main: salamander.chesticuffs.Chesticuffs
+api-version: 1.16
+prefix: Chesticuffs
+commands:
+  registeritem:
+  registerinventory:
