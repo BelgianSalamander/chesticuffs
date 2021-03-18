@@ -15,9 +15,6 @@ public class GameID {
         }
         String id = "";
         int exp = (int)( Math.log(n) / Math.log(chars.length));
-        System.out.println(chars.length);
-        System.out.println(n);
-        System.out.println(exp);
         for(int i = exp; i >= 0; i--){
             //System.out.println(i);
             amount = (int) (n / Math.pow(chars.length, i));

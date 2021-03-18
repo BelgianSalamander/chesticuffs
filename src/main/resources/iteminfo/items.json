@@ -11,7 +11,7 @@
     "ATK" : 1,
     "DEF" : 1,
     "HP" : 2,
-    "traits" : ["flammable"],
+    "traits" : ["Flammable"],
     "flavor" : "P L A N K"
   },
 
@@ -22,6 +22,17 @@
     "HP" : 1,
     "traits" : [],
     "flavor" : "Rock"
+  },
+
+  "GRAVEL" : {
+    "type" : "item",
+    "ATK" : 1,
+    "DEF" : 1,
+    "HP" : 2,
+    "traits" : [
+      "Gravity"
+    ],
+    "flavor" : "Gravel"
   },
 
   "EMERALD" : {

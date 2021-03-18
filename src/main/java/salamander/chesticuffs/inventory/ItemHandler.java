@@ -60,6 +60,7 @@ public class ItemHandler {
 
     static NamespacedKey typeKey, damageKey, defenceKey, healthKey, flavorKey, traitsKey, sideKey, buffKey, debuffKey;
     static JSONObject itemData;
+    static public ItemStack baseCore;
 
 
     static public void init(){
@@ -96,6 +97,16 @@ public class ItemHandler {
         }
         itemData = newItemData;
 
+        baseCore = new ItemStack(Material.DIRT, 1);
+        ItemMeta meta = baseCore.getItemMeta();
+
+        meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "core");
+        meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, (short) 15);
+        meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, "Default Core");
+        meta.getPersistentDataContainer().set(buffKey, PersistentDataType.STRING, "");
+        meta.getPersistentDataContainer().set(debuffKey, PersistentDataType.STRING, "");
+        baseCore.setItemMeta(meta);
+        setLore(baseCore);
     }
 
     static private void initKeys(){
@@ -115,7 +126,6 @@ public class ItemHandler {
         //Check if there actually is an item
         if(item == null || item.getType() == Material.AIR) return;
         ItemMeta meta = item.getItemMeta();
-        System.out.println(item.getType().toString());
         //If item does not have a meta, create one
         if(meta == null) {
             System.out.println(item.getType().toString());
@@ -155,7 +165,6 @@ public class ItemHandler {
                 }
                 item.setItemMeta(meta);
                 setLore(item);
-                return;
             }
         }
     }

@@ -6,4 +6,5 @@ prefix: Chesticuffs
 commands:
   registeritem:
   registerinventory:
-  getnewid:
+  switchtoinv:
+  exitgame:
