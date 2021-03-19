@@ -12,7 +12,6 @@ import salamander.chesticuffs.game.ChesticuffsGame;
 public class OnClickInInventory implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent e){
-        System.out.println("Click in inv!");
         if(!e.getWhoClicked().getPersistentDataContainer().has(ChesticuffsGame.playerIdKey, PersistentDataType.STRING)){
             return;
         }

@@ -58,7 +58,9 @@ public class ItemHandler {
         return debuffKey;
     }
 
-    static NamespacedKey typeKey, damageKey, defenceKey, healthKey, flavorKey, traitsKey, sideKey, buffKey, debuffKey;
+    public static NamespacedKey getEffectIDKey() { return effectIDKey; }
+
+    static NamespacedKey typeKey, damageKey, defenceKey, healthKey, flavorKey, traitsKey, sideKey, buffKey, debuffKey, effectIDKey;
     static JSONObject itemData;
     static public ItemStack baseCore;
 
@@ -105,6 +107,7 @@ public class ItemHandler {
         meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, "Default Core");
         meta.getPersistentDataContainer().set(buffKey, PersistentDataType.STRING, "");
         meta.getPersistentDataContainer().set(debuffKey, PersistentDataType.STRING, "");
+        meta.getPersistentDataContainer().set(effectIDKey, PersistentDataType.INTEGER, 0);
         baseCore.setItemMeta(meta);
         setLore(baseCore);
     }
@@ -120,6 +123,8 @@ public class ItemHandler {
         sideKey = new NamespacedKey(Chesticuffs.getPlugin(), "side");
         buffKey = new NamespacedKey(Chesticuffs.getPlugin(), "buff");
         debuffKey = new NamespacedKey(Chesticuffs.getPlugin(), "debuff");
+        effectIDKey = new NamespacedKey(Chesticuffs.getPlugin(), "effectID");
+
     }
 
     static public void registerItem(ItemStack item){
@@ -155,6 +160,7 @@ public class ItemHandler {
                     String buff = (String) itemStats.get("buff");
                     String debuff = (String) itemStats.get("debuff");
                     String flavor = (String) itemStats.get("flavor");
+                    int effectID = (int) (long) itemStats.get("effectID");
 
                     //Give the actual item those stats
                     meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "core");
@@ -162,6 +168,7 @@ public class ItemHandler {
                     meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
                     meta.getPersistentDataContainer().set(buffKey, PersistentDataType.STRING, buff);
                     meta.getPersistentDataContainer().set(debuffKey, PersistentDataType.STRING, debuff);
+                    meta.getPersistentDataContainer().set(effectIDKey, PersistentDataType.INTEGER, effectID);
                 }
                 item.setItemMeta(meta);
                 setLore(item);

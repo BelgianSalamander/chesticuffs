@@ -1,54 +1,844 @@
 {
-  "OAK_PLANKS" : {
-    "similar" : [
-      "BIRCH_PLANKS",
-      "ACACIA_PLANKS",
-      "DARK_OAK_PLANKS",
-      "JUNGLE_PLANKS",
-      "SPRUCE_PLANKS"
-    ],
-    "type" : "item",
-    "ATK" : 1,
-    "DEF" : 1,
-    "HP" : 2,
-    "traits" : ["Flammable"],
-    "flavor" : "P L A N K"
-  },
-
-  "STONE" : {
-    "type" : "item",
-    "ATK" : 2,
-    "DEF" : 1,
-    "HP" : 1,
-    "traits" : [],
-    "flavor" : "Rock"
-  },
-
-  "GRAVEL" : {
-    "type" : "item",
-    "ATK" : 1,
-    "DEF" : 1,
-    "HP" : 2,
-    "traits" : [
-      "Gravity"
-    ],
-    "flavor" : "Gravel"
-  },
-
-  "EMERALD" : {
-    "type" : "item",
-    "ATK" : 2,
-    "DEF" : 1,
-    "HP" : 2,
-    "traits" : [],
-    "flavor" : "Shiny!"
-  },
-
-  "IRON_BLOCK" : {
-    "type" : "core",
-    "HP" : 20,
-    "buff" : "Every item played gets +1 HP",
-    "debuff" : "",
-    "flavor" : "Ironic"
-  },
+    "OAK_PLANKS": {
+        "similar": [
+            "BIRCH_PLANKS",
+            "ACACIA_PLANKS",
+            "DARK_OAK_PLANKS",
+            "JUNGLE_PLANKS",
+            "SPRUCE_PLANKS"
+        ],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [
+            "Flammable"
+        ],
+        "flavor": "P L A N K"
+    },
+    "STONE": {
+        "similar": [
+            "POLISHED_GRANITE",
+            "POLISHED_DIORITE",
+            "POLISHED_ANDESITE"
+        ],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Rock"
+    },
+    "GRANITE": {
+        "similar": [
+            "COBBLESTONE",
+            "ANDESITE",
+            "GRANITE"
+        ],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Rock"
+    },
+    "DIRT": {
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP" : 1,
+        "traits": [],
+        "flavor": "I'm a dirty crime boy"
+    },
+    "COARSE_DIRT": {
+        "type": "item",
+        "ATK": 2,
+        "DEF": 1,
+        "HP": 3,
+        "traits": [],
+        "flavor": "Bleh"
+    },
+    "BEDROCK": {
+        "type": "item",
+        "ATK": 6,
+        "DEF": 9,
+        "HP": 6,
+        "traits": [],
+        "flavor": "What the fuck"
+    },
+    "SAND": {
+        "similar": [
+            "RED_SAND"
+        ],
+        "type": "item",
+        "ATK": 3,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "I don't like sand"
+    },
+    "GRAVEL": {
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 1,
+        "traits": [
+            "Gravity"
+        ],
+        "flavor": "Gravel"
+    },
+    "IRON_BLOCK": {
+        "type": "core",
+        "HP": 20,
+        "buff": "Every item played gets +1 HP",
+        "debuff": "",
+        "flavor": "Ironic",
+        "effectID": 1
+    },
+    "IRON_ORE": {
+        "type": "item",
+        "ATK": 2,
+        "DEF": 1,
+        "HP": 4,
+        "traits": [],
+        "flavor": "Ironic"
+    },
+    "GOLD_ORE": {
+        "type": "item",
+        "ATK": 2,
+        "DEF": 1,
+        "HP": 3,
+        "traits": [
+            "Jumpstart"
+        ],
+        "flavor": "Precious"
+    },
+    "OAK_LOG": {
+        "similar": [
+            "SPRUCE_LOG",
+            "BIRCH_LOG",
+            "JUNGLE_LOG",
+            "ACACIA_LOG",
+            "DARK_OAK_LOG",
+            "OAK_WOOD",
+            "SPRUCE_WOOD",
+            "BIRCH_WOOD",
+            "JUNGLE_WOOD",
+            "ACACIA_WOOD",
+            "DARK_OAK_WOOD"
+        ],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 1,
+        "HP": 2,
+        "traits": [
+            "Flammable"
+        ],
+        "flavor": "Epic Flavor"
+    },
+    "STRIPPED_OAK_LOG": {
+        "similar": [
+            "STRIPPED_SPRUCE_LOG",
+            "STRIPPED_BIRCH_LOG",
+            "STRIPPED_JUNGLE_LOG",
+            "STRIPPED_ACACIA_LOG",
+            "STRIPPED_DARK_OAK_LOG",
+            "STRIPPED_OAK_WOOD",
+            "STRIPPED_SPRUCE_WOOD",
+            "STRIPPED_BIRCH_WOOD",
+            "STRIPPED_JUNGLE_WOOD",
+            "STRIPPED_ACACIA_WOOD",
+            "STRIPPED_DARK_OAK_WOOD"
+        ],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [
+            "Flammable"
+        ],
+        "flavor": "Stripped Wood"
+    },
+    "GLASS": {
+        "similar": [
+            "WHITE_STAINED_GLASS",
+            "ORANGE_STAINED_GLASS",
+            "MAGENTA_STAINED_GLASS",
+            "LIGHT_BLUE_STAINED_GLASS",
+            "YELLOW_STAINED_GLASS",
+            "LIME_STAINED_GLASS",
+            "PINK_STAINED_GLASS",
+            "GRAY_STAINED_GLASS",
+            "LIGHT_GRAY_STAINED_GLASS",
+            "CYAN_STAINED_GLASS",
+            "PURPLE_STAINED_GLASS",
+            "BLUE_STAINED_GLASS",
+            "BROWN_STAINED_GLASS",
+            "GREEN_STAINED_GLASS",
+            "RED_STAINED_GLASS",
+            "BLACK_STAINED_GLASS"
+        ],
+        "type": "item",
+        "ATK": 4,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [
+            "Shrapnel",
+            "Fragile"
+        ],
+        "flavor": "Meta?"
+    },
+    "SANDSTONE": {
+        "similar": [
+            "RED_SANDSTONE"
+        ],
+        "type": "item",
+        "ATK": 3,
+        "DEF": 1,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Sand, but harder"
+    },
+    "CHISELED_SANDSTONE": {
+        "similar": [
+            "ORANGE_WOOL",
+            "MAGENTA_WOOL",
+            "LIGHT_BLUE_WOOL",
+            "YELLOW_WOOL",
+            "LIME_WOOL",
+            "PINK_WOOL",
+            "GRAY_WOOL",
+            "LIGHT_GRAY_WOOL",
+            "CYAN_WOOL",
+            "PURPLE_WOOL",
+            "BLUE_WOOL",
+            "BROWN_WOOL",
+            "GREEN_WOOL",
+            "RED_WOOL",
+            "BLACK_WOOL"
+        ],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Fluffy"
+    },
+    "OAK_SLAB": {
+        "similar": [
+            "SPRUCE_SLAB",
+            "BIRCH_SLAB",
+            "JUNGLE_SLAB",
+            "ACACIA_SLAB",
+            "DARK_OAK_SLAB"
+        ],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [
+            "Flammable"
+        ],
+        "flavor": "P L A"
+    },
+    "STONE_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Half a stone"
+    },
+    "SMOOTH_STONE_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Ay, stay"
+    },
+    "SANDSTONE_SLAB": {
+        "similar": [
+            "RED_SANDSTONE_SLAB"
+        ],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Sandy an"
+    },
+    "CUT_SANDSTONE": {
+        "similar": [
+            "CUT_RED_SANDSTONE"
+        ],
+        "type": "item",
+        "ATK": 3,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "How do you cut sandstone?"
+    },
+    "CUT_SANDSTONE_SLAB": {
+        "similar": [
+            "CUT_RED_SANDSTONE_SLAB"
+        ],
+        "type": "item",
+        "ATK": 3,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "How do you cu"
+    },
+    "COBBLESTONE_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Cobbled"
+    },
+    "BRICK_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Aw, I bricke"
+    },
+    "STONE_BRICK_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Domestica"
+    },
+    "PRISMARINE_SLAB": {
+        "similar": [
+            "PRISMARINE_BRICK_SLAB",
+            "DARK_PRISMARINE_SLAB"
+        ],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Guardian"
+    },
+    "SMOOTH_SANDSTONE": {
+        "similar": [
+            "SMOOTH_RED_SANDSTONE"
+        ],
+        "type": "item",
+        "ATK": 3,
+        "DEF": 1,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Sandy and smooth"
+    },
+    "SMOOTH_STONE": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Ay, stay smooth!"
+    },
+    "BRICKS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 2,
+        "HP": 3,
+        "traits": [],
+        "flavor": "Aw, I bricked my switch!"
+    },
+    "MOSSY_COBBLESTONE": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 3,
+        "traits": [
+            "Plant"
+        ],
+        "flavor": "Cobble, but mossy!"
+    },
+    "OBSIDIAN": {
+        "similar": [],
+        "type": "item",
+        "ATK": 0,
+        "DEF": 3,
+        "HP": 9,
+        "traits": [],
+        "flavor": "Hard as... well, you know"
+    },
+    "OAK_STAIRS": {
+        "similar": [
+            "SPRUCE_STAIRS",
+            "BIRCH_STAIRS",
+            "ACACIA_STAIRS",
+            "DARK_OAK_STAIRS",
+            "JUNGLE_STAIRS"
+        ],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "P L A N"
+    },
+    "COBBLESTONE_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Cobble toget"
+    },
+    "SNOW_BLOCK": {
+        "similar": [],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Snowhere to run!"
+    },
+    "CLAY": {
+        "similar": [],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Ooooh Dreaaam!"
+    },
+    "PUMPKIN": {
+        "similar": [],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 1,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Happy Halloween!"
+    },
+    "CARVED_PUMPKIN": {
+        "similar": [],
+        "type": "item",
+        "ATK": 3,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "I am hollow inside"
+    },
+    "STONE_BRICKS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Domesticated stone"
+    },
+    "MOSSY_STONE_BRICKS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 3,
+        "traits": [
+            "Plant"
+        ],
+        "flavor": "Domesticated stone, but mossy"
+    },
+    "CRACKED_STONE_BRICKS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Dude, I'm cracked at Fortnite"
+    },
+    "CHISELED_STONE_BRICKS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 3,
+        "traits": [],
+        "flavor": "What a perfect jawline!"
+    },
+    "MELON": {
+        "similar": [],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 1,
+        "HP": 3,
+        "traits": [
+            "Plant"
+        ],
+        "flavor": "What a pair"
+    },
+    "STONE_BRICK_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Domesticated st"
+    },
+    "SANDSTONE_STAIRS": {
+        "similar": [
+            "RED_SANDSTONE_STAIRS"
+        ],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Sandy and sto"
+    },
+    "WHITE_TERRACOTTA": {
+        "similar": [
+            "ORANGE_TERRACOTTA",
+            "MAGENTA_TERRACOTTA",
+            "LIGHT_BLUE_TERRACOTTA",
+            "YELLOW_TERRACOTTA",
+            "LIME_TERRACOTTA",
+            "PINK_TERRACOTTA",
+            "GRAY_TERRACOTTA",
+            "LIGHT_GRAY_TERRACOTTA",
+            "CYAN_TERRACOTTA",
+            "PURPLE_TERRACOTTA",
+            "BLUE_TERRACOTTA",
+            "BROWN_TERRACOTTA",
+            "GREEN_TERRACOTTA",
+            "RED_TERRACOTTA",
+            "BLACK_TERRACOTTA"
+        ],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 2,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Hardened Clay"
+    },
+    "HAY_BALE": {
+        "similar": [],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 1,
+        "HP": 4,
+        "traits": [],
+        "flavor": "Hay, I'm here to pay bale"
+    },
+    "TERRACOTTA": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 2,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Hardened Clay"
+    },
+    "PRISMARINE": {
+        "similar": [
+            "PRISMARINE_BRICKS",
+            "DARK_PRISMARINE"
+        ],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 2,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Guardians Suck"
+    },
+    "PRISMARINE_STAIRS": {
+        "similar": [
+            "PRISMARINE_BRICK_STAIRS",
+            "DARK_PRISMARINE_STAIRS"
+        ],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 1,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Guardians su"
+    },
+    "SEA_LANTERN": {
+        "similar": [],
+        "type": "item",
+        "ATK": 3,
+        "DEF": 1,
+        "HP": 3,
+        "traits": [
+            "Light"
+        ],
+        "flavor": "The best light source"
+    },
+    "MAGMA_BLOCK": {
+        "similar": [],
+        "type": "item",
+        "ATK": 4,
+        "DEF": 1,
+        "HP": 2,
+        "traits": [],
+        "flavor": "SSssss"
+    },
+    "WHITE_CONCRETE": {
+        "similar": [
+            "ORANGE_CONCRETE",
+            "MAGENTA_CONCRETE",
+            "LIGHT_BLUE_CONCRETE",
+            "YELLOW_CONCRETE",
+            "LIME_CONCRETE",
+            "PINK_CONCRETE",
+            "GRAY_CONCRETE",
+            "LIGHT_GRAY_CONCRETE",
+            "CYAN_CONCRETE",
+            "PURPLE_CONCRETE",
+            "BLUE_CONCRETE",
+            "BROWN_CONCRETE",
+            "GREEN_CONCRETE",
+            "RED_CONCRETE",
+            "BLACK_CONCRETE"
+        ],
+        "type": "item",
+        "ATK": 3,
+        "DEF": 2,
+        "HP": 2,
+        "traits": [],
+        "flavor": "This win is concrete"
+    },
+    "WHITE_CONCRETE_POWDER": {
+        "similar": [
+            "ORANGE_CONCRETE_POWDER",
+            "MAGENTA_CONCRETE_POWDER",
+            "LIGHT_BLUE_CONCRETE_POWDER",
+            "YELLOW_CONCRETE_POWDER",
+            "LIME_CONCRETE_POWDER",
+            "PINK_CONCRETE_POWDER",
+            "GRAY_CONCRETE_POWDER",
+            "LIGHT_GRAY_CONCRETE_POWDER",
+            "CYAN_CONCRETE_POWDER",
+            "PURPLE_CONCRETE_POWDER",
+            "BLUE_CONCRETE_POWDER",
+            "BROWN_CONCRETE_POWDER",
+            "GREEN_CONCRETE_POWDER",
+            "RED_CONCRETE_POWDER",
+            "BLACK_CONCRETE_POWDER"
+        ],
+        "type": "item",
+        "ATK": 3,
+        "DEF": 2,
+        "HP": 2,
+        "traits": [
+            "Gravity"
+        ],
+        "flavor": "Ey man, you like powderm man?"
+    },
+    "DEAD_TUBE_CORAL_BLOCK": {
+        "similar": [
+            "DEAD_BRAIN_CORAL_BLOCK",
+            "DEAD_BUBBLE_CORAL_BLOCK",
+            "DEAD_FIRE_CORAL_BLOCK",
+            "DEAD_HORN_CORAL_BLOCK"
+        ],
+        "type": "item",
+        "ATK": 5,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Sharp and spiky"
+    },
+    "POLISHED_GRANITE_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Nie bierz mnie za gr"
+    },
+    "MOSSY_STONE_BRICK_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [
+            "Plant"
+        ],
+        "flavor": "Domesticated stone, but m"
+    },
+    "POLISHED_DIORITE_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Ptasie odcho"
+    },
+    "MOSSY_COBBLESTONE_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [
+            "Plant"
+        ],
+        "flavor": "Cobble, but m"
+    },
+    "STONE_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Rock-a-bye, b"
+    },
+    "SMOOTH_SANDSTONE_STAIRS": {
+        "similar": [
+            "SMOOTH_RED_SANDSTONE_STAIRS"
+        ],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Sandy and smo"
+    },
+    "GRANITE_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Don't take me for gra"
+    },
+    "ANDESITE_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Andesited bigfoot right t"
+    },
+    "POLISHED_ANDESITE_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "I zobaczylem tam duz"
+    },
+    "DIORITE_STAIRS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Bird po"
+    },
+    "POLISHED_GRANITE_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Nie bierz mni"
+    },
+    "MOSSY_STONE_BRICK_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Domesticated s"
+    },
+    "POLISHED_DIORITE_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Ptasie o"
+    },
+    "MOSSY_COBBLESTONE_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [],
+        "flavor": "Cobble, b"
+    },
+    "SMOOTH_SANDSTONE_SLAB": {
+        "similar": [
+            "SMOOTH_RED_SANDSTONE_SLAB"
+        ],
+        "type": "item",
+        "ATK": 2,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Sandy an"
+    },
+    "GRANITE_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Don't take me"
+    },
+    "ANDESITE_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Andesited bigf"
+    },
+    "POLISHED_ANDESITE_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "I zobaczylem t"
+    },
+    "DIORITE_SLAB": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [],
+        "flavor": "Bird"
+    }
 }
