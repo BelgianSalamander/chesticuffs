@@ -74,7 +74,9 @@
         "ATK": 3,
         "DEF": 0,
         "HP": 1,
-        "traits": [],
+        "traits": [
+            "Gravity"
+        ],
         "flavor": "I don't like sand"
     },
     "GRAVEL": {
@@ -86,14 +88,6 @@
             "Gravity"
         ],
         "flavor": "Gravel"
-    },
-    "IRON_BLOCK": {
-        "type": "core",
-        "HP": 20,
-        "buff": "Every item played gets +1 HP",
-        "debuff": "",
-        "flavor": "Ironic",
-        "effectID": 1
     },
     "IRON_ORE": {
         "type": "item",
@@ -534,7 +528,7 @@
         "traits": [],
         "flavor": "Hardened Clay"
     },
-    "HAY_BALE": {
+    "HAY_BLOCK": {
         "similar": [],
         "type": "item",
         "ATK": 2,

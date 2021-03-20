@@ -70,8 +70,8 @@ public class ItemHandler {
         //Load iteminfo from JSON file
         //The loading from file code is copied from the internet
         JSONParser parser = new JSONParser();
-        InputStream is = ItemHandler.class.getResourceAsStream("/iteminfo/items.json");
         try{
+            InputStream is = new FileInputStream(Chesticuffs.getItemsFile());
             String data = readFromInputStream(is);
             itemData = (JSONObject) parser.parse(data);
         } catch (ParseException e) {

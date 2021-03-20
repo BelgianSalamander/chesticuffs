@@ -255,30 +255,41 @@ public class ChesticuffsGame {
         ItemHandler.setLore(item);
     }
 
+    private void broadcast(String message){
+        playerOne.sendMessage(message);
+        playerTwo.sendMessage(message);
+    }
+
     private void combat(){
         ItemStack defender, attacker;
         ItemMeta defendingItemMeta, attackingItemMeta;
         short defenderHP, attackerHP;
 
-        ItemStack defendingCore =  getCore(3 - turn);
+        ItemStack defendingCore = chest.getSnapshotInventory().getItem(22 - 6 * getPriority());
         ItemMeta defendingCoreMeta = defendingCore.getItemMeta();
         PersistentDataContainer defendingCoreData = defendingCoreMeta.getPersistentDataContainer();
         short coreHealth = defendingCoreData.get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
         for(Map.Entry<Integer, Integer> entry: attackersAndDefenders.entrySet()){
             if(entry.getValue() == null){
-                coreHealth -= chest.getBlockInventory().getItem(entry.getKey()).getItemMeta().getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
+                broadcast(chest.getBlockInventory().getItem(entry.getKey()).getType().toString() + " (Slot " + entry.getKey() + ") is undefended!");
+                int coreDamage = chest.getSnapshotInventory().getItem(entry.getKey()).getItemMeta().getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
+                broadcast("Core takes " + coreDamage + " damage!");
+                coreHealth -= coreDamage;
                 ItemHandler.setLore(chest.getBlockInventory().getItem(entry.getKey()));
             }else{
-                attacker = chest.getBlockInventory().getItem(entry.getKey());
-                defender = chest.getBlockInventory().getItem(entry.getValue());
+                attacker = chest.getSnapshotInventory().getItem(entry.getKey());
+                defender = chest.getSnapshotInventory().getItem(entry.getValue());
                 attackingItemMeta = attacker.getItemMeta();
                 defendingItemMeta = defender.getItemMeta();
                 attackerHP = attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
                 defenderHP = defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
 
-                defenderHP -= Math.max((attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT) - defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT)), 0);
-                attackerHP -=Math.max((defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT) - attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT)), 0);
-
+                int attackerDamage = Math.max((attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT) - defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT)), 0);
+                int defenderDamage = Math.max((defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT) - attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT)), 0);
+                defenderHP -= attackerDamage;
+                attackerHP -= defenderDamage;
+                broadcast(defender.getType().toString() + " (Slot " + entry.getValue() + ") " + " takes " + attackerDamage + " damage!");
+                broadcast(attacker.getType().toString() + " (Slot " + entry.getKey() + ") " + " takes " + defenderDamage + " damage!");
                 if(defenderHP <= 0){
                     chest.getSnapshotInventory().setItem(entry.getValue(), null);
                 }else{
@@ -295,28 +306,42 @@ public class ChesticuffsGame {
                 ItemHandler.setLore(defender);
             }
         }
-        chest.update();
         defendingCoreData.set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, coreHealth);
         defendingCore.setItemMeta(defendingCoreMeta);
         ItemHandler.setLore(defendingCore);
+        chest.update();
         broadcastChanges();
         if(coreHealth <= 0){
             //De-registers Game
-            Chesticuffs.getGames().remove(id);
-            chest.getPersistentDataContainer().remove(ChestKeys.idKey);
-            playerOne.getPersistentDataContainer().remove(playerIdKey);
-            playerTwo.getPersistentDataContainer().remove(playerIdKey);
+            endGame(getPriority());
+        }
+    }
 
-            Bukkit.getServer().getScheduler().runTask(Chesticuffs.getPlugin(), new InventoryClose(playerOneInventory));
-            Bukkit.getServer().getScheduler().runTask(Chesticuffs.getPlugin(), new InventoryClose(playerTwoInventory));
+    public void handleExitEvent(Player player){
+        if(player.getUniqueId().equals(playerOne.getUniqueId())){
+            endGame(2);
+            broadcast(ChatColor.RED + "Red exited the chest and forfeited!");
+        }else{
+            endGame(1);
+            broadcast(ChatColor.BLUE + "Blue exited the chest and forfeited!");
+        }
+    }
 
-            if(getPriority() == 1){
-                playerOne.sendMessage(ChatColor.RED + "Red wins the game!");
-                playerTwo.sendMessage(ChatColor.RED + "Red wins the game!");
-            }else{
-                playerOne.sendMessage(ChatColor.BLUE + "Blue wins the game!");
-                playerTwo.sendMessage(ChatColor.BLUE + "Blue wins the game!");
-            }
+    private void endGame(int winner){
+        Chesticuffs.getGames().remove(id);
+        chest.getPersistentDataContainer().remove(ChestKeys.idKey);
+        playerOne.getPersistentDataContainer().remove(playerIdKey);
+        playerTwo.getPersistentDataContainer().remove(playerIdKey);
+
+        Bukkit.getServer().getScheduler().runTask(Chesticuffs.getPlugin(), new InventoryClose(playerOneInventory));
+        Bukkit.getServer().getScheduler().runTask(Chesticuffs.getPlugin(), new InventoryClose(playerTwoInventory));
+
+        if(winner == 1){
+            playerOne.sendMessage(ChatColor.RED + "Red wins the game!");
+            playerTwo.sendMessage(ChatColor.RED + "Red wins the game!");
+        }else{
+            playerOne.sendMessage(ChatColor.BLUE + "Blue wins the game!");
+            playerTwo.sendMessage(ChatColor.BLUE + "Blue wins the game!");
         }
     }
 
@@ -396,6 +421,7 @@ public class ChesticuffsGame {
                 }
                 break;
             case(1):
+            case(4):
                 if(e.getClickedInventory().equals(player.getInventory())){
                     broadcastChanges(); //Clears all virtual green glass panes if there are any (Because the panes aren't in the actual chest)
                     selectedItem = null;
@@ -478,11 +504,22 @@ public class ChesticuffsGame {
                         System.out.println(playerOneSkipped);
                         System.out.println(playerTwoSkipped);
                         if(playerOneSkipped && playerTwoSkipped){
-                            phaseNumber = 2;
-                            selectedItem = null;
-                            turn = getPriority();
-                            attackersAndDefenders.clear();
-                            attackersSelected = 0;
+                            if(phaseNumber == 1){
+                                phaseNumber = 2;
+                                selectedItem = null;
+                                turn = getPriority();
+                                attackersAndDefenders.clear();
+                                attackersSelected = 0;
+                            }else if(phaseNumber == 4){
+                                phaseNumber = 1;
+                                selectedItem = null;
+                                roundNumber += 1;
+                                turn = getPriority();
+                                playerOneAmountPlacedThisRound = 0;
+                                playerTwoAmountPlacedThisRound = 0;
+                                playerOneSkipped = false;
+                                playerTwoSkipped = true;
+                            }
                         }else {
                             turn = 3 - turn;
                         }
@@ -664,7 +701,6 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
-
         }
     }
 }

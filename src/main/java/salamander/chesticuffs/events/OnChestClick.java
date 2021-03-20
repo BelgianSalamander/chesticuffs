@@ -35,7 +35,7 @@ public class OnChestClick implements Listener {
             if(game.isPlayerInGame(e.getPlayer())){
                 e.setCancelled(true);
                 e.getPlayer().sendMessage(ChatColor.RED + "You are already in that game!");
-                //return;
+                return;
             }
             game.addPlayer(e.getPlayer());
             e.getPlayer().sendMessage(ChatColor.GREEN + "Successfully Joined Game!");
