@@ -2,13 +2,12 @@ package salamander.chesticuffs.inventory;
 
 
 import net.kyori.adventure.text.Component;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.Recipe;
-import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.json.simple.JSONArray;
@@ -16,7 +15,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import salamander.chesticuffs.Chesticuffs;
-import salamander.chesticuffs.commands.RegisterItem;
 
 import java.io.*;
 import java.util.*;
@@ -66,6 +64,7 @@ public class ItemHandler {
 
 
     static public void init(){
+
         initKeys();
         //Load iteminfo from JSON file
         //The loading from file code is copied from the internet
@@ -79,7 +78,6 @@ public class ItemHandler {
         } catch (IOException e){
             e.printStackTrace();
         }
-        System.out.println(itemData.values());
         JSONObject newItemData = (JSONObject) itemData.clone();
 
         //Create duplicate info for "similar" items for easy access
@@ -99,11 +97,11 @@ public class ItemHandler {
         }
         itemData = newItemData;
 
-        baseCore = new ItemStack(Material.DIRT, 1);
+        baseCore = new ItemStack(Material.CRAFTING_TABLE, 1);
         ItemMeta meta = baseCore.getItemMeta();
 
         meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "core");
-        meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, (short) 15);
+        meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, (short) 10);
         meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, "Default Core");
         meta.getPersistentDataContainer().set(buffKey, PersistentDataType.STRING, "");
         meta.getPersistentDataContainer().set(debuffKey, PersistentDataType.STRING, "");
@@ -199,7 +197,6 @@ public class ItemHandler {
             short HP = meta.getPersistentDataContainer().get(healthKey, PersistentDataType.SHORT);
             String traits = meta.getPersistentDataContainer().get(traitsKey, PersistentDataType.STRING);
             String flavor = meta.getPersistentDataContainer().get(flavorKey, PersistentDataType.STRING);
-
             List<Component> lore = new ArrayList<Component>();
             lore.add(Component.text(ChatColor.YELLOW + "Item"));
             lore.add(Component.text(""));
@@ -217,7 +214,6 @@ public class ItemHandler {
             meta.lore(lore);
             item.setItemMeta(meta);
         }else if(type.equals("core")){
-            System.out.println("Setting lore for core!");
             short HP = meta.getPersistentDataContainer().get(healthKey, PersistentDataType.SHORT);
             String flavor = meta.getPersistentDataContainer().get(flavorKey, PersistentDataType.STRING);
             String buff = meta.getPersistentDataContainer().get(buffKey, PersistentDataType.STRING);
@@ -227,11 +223,19 @@ public class ItemHandler {
             lore.add(Component.text(ChatColor.YELLOW + "Core"));
             lore.add(Component.text(""));
             lore.add(Component.text(ChatColor.DARK_GREEN + Short.toString(HP) + " HP"));
+            boolean dash = false;
             if(!buff.equals("")){
-                lore.add(Component.text(ChatColor.GREEN + "- " + buff));
+                for(String buffLine : buff.split("\n")) {
+                    lore.add(Component.text(ChatColor.GREEN + (dash ? "  " : "- ") + buffLine));
+                    dash = true;
+                }
             }
+            dash = false;
             if(!debuff.equals("")){
-                lore.add(Component.text(ChatColor.RED + "- " + debuff));
+                for(String debuffLine : debuff.split("\n")) {
+                    lore.add(Component.text(ChatColor.RED + (dash ? "  " : "- ") + debuffLine));
+                    dash = true;
+                }
             }
             lore.add(Component.text(ChatColor.WHITE + "\"" + flavor + "\""));
             meta.lore(lore);
@@ -239,7 +243,7 @@ public class ItemHandler {
         }
     }
 
-    static private String readFromInputStream(InputStream inputStream)
+    static public String readFromInputStream(InputStream inputStream)
             throws IOException {
         //From internet
         StringBuilder resultStringBuilder = new StringBuilder();

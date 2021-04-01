@@ -29,7 +29,7 @@
         "traits": [],
         "flavor": "Rock"
     },
-    "GRANITE": {
+    "DIORITE": {
         "similar": [
             "COBBLESTONE",
             "ANDESITE",
@@ -46,7 +46,7 @@
         "type": "item",
         "ATK": 1,
         "DEF": 0,
-        "HP" : 1,
+        "HP": 1,
         "traits": [],
         "flavor": "I'm a dirty crime boy"
     },
@@ -178,7 +178,8 @@
         "HP": 1,
         "traits": [
             "Shrapnel",
-            "Fragile"
+            "Fragile",
+            "Capbreaker 1"
         ],
         "flavor": "Meta?"
     },
@@ -193,7 +194,7 @@
         "traits": [],
         "flavor": "Sand, but harder"
     },
-    "CHISELED_SANDSTONE": {
+    "WHITE_WOOL": {
         "similar": [
             "ORANGE_WOOL",
             "MAGENTA_WOOL",
@@ -215,7 +216,9 @@
         "ATK": 2,
         "DEF": 0,
         "HP": 2,
-        "traits": [],
+        "traits": [
+            "Capbreaker 1"
+        ],
         "flavor": "Fluffy"
     },
     "OAK_SLAB": {
@@ -525,7 +528,9 @@
         "ATK": 1,
         "DEF": 2,
         "HP": 1,
-        "traits": [],
+        "traits": [
+            "Capbreaker 1"
+        ],
         "flavor": "Hardened Clay"
     },
     "HAY_BLOCK": {
@@ -612,7 +617,9 @@
         "ATK": 3,
         "DEF": 2,
         "HP": 2,
-        "traits": [],
+        "traits": [
+            "Capbreaker 1"
+        ],
         "flavor": "This win is concrete"
     },
     "WHITE_CONCRETE_POWDER": {
@@ -638,7 +645,8 @@
         "DEF": 2,
         "HP": 2,
         "traits": [
-            "Gravity"
+            "Gravity",
+            "Capbreaker 1"
         ],
         "flavor": "Ey man, you like powderm man?"
     },
@@ -834,5 +842,139 @@
         "HP": 1,
         "traits": [],
         "flavor": "Bird"
+    },
+    "IRON_BLOCK": {
+        "type": "core",
+        "HP": 20,
+        "buff": "All items gain +1 HP",
+        "debuff": "",
+        "flavor": "Ironic",
+        "effectID": 1
+    },
+    "OAK_SAPLING": {
+        "similar": [
+            "BIRCH_SAPLING",
+            "SPRUCE_SAPLING",
+            "JUNGLE_SAPLING",
+            "ACACIA_SAPLING",
+            "DARK_OAK_SAPLING"
+        ],
+        "type": "core",
+        "HP": 20,
+        "buff": "At the end of each round, your plants gain +1 HP",
+        "debuff": "Your plants start with 0.5x HP",
+        "flavor": "P L A N T",
+        "effectID": 2
+    },
+    "OAK_LEAVES": {
+        "similar": [
+            "SPRUCE_LEAVES",
+            "BIRCH_LEAVES",
+            "JUNGLE_LEAVES",
+            "ACACIA_LEAVES",
+            "DARK_OAK_LEAVES"
+        ],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [
+            "Plant",
+            "Flammable"
+        ],
+        "flavor": "Leafy"
+    },
+    "GRASS": {
+        "similar": [
+            "FERN"
+        ],
+        "type": "item",
+        "ATK": 0,
+        "DEF": 0,
+        "HP": 3,
+        "traits": [
+            "Plant"
+        ],
+        "flavor": "REEE Why is no one making flavors"
+    },
+    "DEAD_BUSH": {
+        "similar": [],
+        "type": "item",
+        "ATK": 0,
+        "DEF": 0,
+        "HP": 2,
+        "traits": [
+            "Plant"
+        ],
+        "flavor": "A bush but dead"
+    },
+    "SEA_GRASS": {
+        "similar": [],
+        "type": "item",
+        "ATK": 0,
+        "DEF": 0,
+        "HP": 3,
+        "traits": [
+            "Plant",
+            "Soak"
+        ],
+        "flavor": "Fishy"
+    },
+    "SEA_PICKLE": {
+        "similar": [],
+        "type": "item",
+        "ATK": 1,
+        "DEF": 3,
+        "HP": 1,
+        "traits": [
+            "Plant",
+            "Soak",
+            "Picklesoak"
+        ],
+        "flavor": "He turned himself into a pickle!"
+    },
+    "WITHER_ROSE": {
+        "similar": [],
+        "type": "item",
+        "ATK": 9,
+        "DEF": 0,
+        "HP": 1,
+        "traits": [
+            "Wither",
+            "Flammable"
+        ],
+        "flavor": "Speedrunner much?"
+    },
+    "ENCHANTED_GOLDEN_APPLE": {
+        "type" : "core",
+        "HP" : 25,
+        "buff" : "On clicked, all allied items gain immunity until end\nof next combat phase",
+        "debuff" : "On use, the core drops down to 5 HP",
+        "flavor" : "Za Warudo!",
+        "effectID" : 3
+    },
+    "LAVA_BUCKET": {
+        "type" : "core",
+        "HP" : 20,
+        "buff" : "Every round, EVERY item takes 1 fire damage",
+        "debuff" : "Every round, EVERY item takes 1 fire damage",
+        "flavor" : "Hot hot hot!",
+        "effectID" : 4
+    },
+    "COAL_BLOCK" : {
+        "type" : "core",
+        "HP" : 20,
+        "buff" : "Applies flammable to EVERY item",
+        "debuff" : "Applies flammable to EVERY item",
+        "flavor" : "I'm on fire!",
+        "effectID" : 5
+    },
+    "OXEYE_DAISY" : {
+        "type" : "core",
+        "HP" : 20,
+        "buff" : "All allied plants gain 1 DEF",
+        "debuff" : "All allied plants lose 1 HP",
+        "flavor" : "THE FUNNIEST",
+        "effectID" : 6
     }
 }

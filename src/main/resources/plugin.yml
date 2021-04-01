@@ -4,7 +4,18 @@ main: salamander.chesticuffs.Chesticuffs
 api-version: 1.16
 prefix: Chesticuffs
 commands:
-  registeritem:
-  registerinventory:
-  switchtoinv:
+  selectchest:
+  clearchests:
+  joinqueue:
+  stats:
+  startgame:
+  removechest:
+  setframe:
+  resetplayer:
+  updateleaderboard:
+  setlimit:
+  togglequeue:
+  toggledebug:
+  debuggame:
+  openinv:
   exitgame:
