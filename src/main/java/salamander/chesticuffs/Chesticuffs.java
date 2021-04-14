@@ -99,6 +99,8 @@ public final class Chesticuffs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new OnPlayerJoin(), this);
         getServer().getPluginManager().registerEvents(new OnPlayerLeave(), this);
         getServer().getPluginManager().registerEvents(new OnPortal(), this);
+        getServer().getPluginManager().registerEvents(new OnPlayerDeath(), this);
+        getServer().getPluginManager().registerEvents(new TeleportEvent(), this);
 
         getServer().getScheduler().runTaskTimer(this, new QueueScanner(), 200, 20);
         getServer().getScheduler().runTaskTimer(this, new updateDataAndStuff(), 1200, 1200);

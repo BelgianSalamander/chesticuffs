@@ -37,7 +37,6 @@ public class ChestManager {
             e.printStackTrace();
         }
         JSONChests = (JSONArray) JSONdata.get("chests");
-        System.out.println(JSONChests.size());
         for (Object coordinates : JSONChests){
             JSONArray JSONCoords = (JSONArray) coordinates;
             Location chestLocation = new Location(Bukkit.getWorld((String) JSONCoords.get(3)), (Long) JSONCoords.get(0), (Long) JSONCoords.get(1), (Long) JSONCoords.get(2));

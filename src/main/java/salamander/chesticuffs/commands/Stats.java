@@ -13,7 +13,6 @@ public class Stats implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if(!command.getName().equalsIgnoreCase("stats")) return true;
         if(args.length > 0){
-            System.out.println("Argument Given");
             DataLoader.getData().get(Bukkit.getOfflinePlayerIfCached(args[0]).getUniqueId()).displayStatsTo((Player) sender);
             return true;
         }

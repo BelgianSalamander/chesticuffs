@@ -28,11 +28,14 @@ public class OnInventoryExit implements Listener {
 
     @EventHandler
     public void onExit(InventoryCloseEvent e){
-        if(!e.getPlayer().getPersistentDataContainer().has(ChesticuffsGame.playerIdKey, PersistentDataType.STRING)){
+        if(!e.getPlayer().getPersistentDataContainer().has(ChesticuffsGame.playerIdKey, PersistentDataType.STRING)) {
             return;
         }
         String gameId = e.getPlayer().getPersistentDataContainer().get(ChesticuffsGame.playerIdKey, PersistentDataType.STRING);
         ChesticuffsGame game = Chesticuffs.getGame(gameId);
+        if(game==null) {
+            return;
+        }
         if(System.currentTimeMillis() -  game.getStartTime() < 10 * 1000){
             Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new OpenInv(e.getInventory(), (Player) e.getPlayer()), 1);
             e.getPlayer().sendMessage(ChatColor.RED + "Exited too fast. Putting you back in chest.");

@@ -3,7 +3,6 @@ package salamander.chesticuffs.game;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.block.Chest;
-import org.bukkit.block.Container;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -12,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitTask;
 import salamander.chesticuffs.ChestManager;
 import salamander.chesticuffs.Chesticuffs;
 import salamander.chesticuffs.playerData.DataLoader;
@@ -21,24 +21,41 @@ import salamander.chesticuffs.inventory.ChestKeys;
 import salamander.chesticuffs.inventory.ItemHandler;
 
 import java.util.*;
-import java.util.List;
 
 public class ChesticuffsGame {
-    static public NamespacedKey playerIdKey = new NamespacedKey(Chesticuffs.getPlugin(), "gameId");
-    static public NamespacedKey playerInGameKey = new NamespacedKey(Chesticuffs.getPlugin(), "inGame");
-    private Player playerOne, playerTwo;
-    private Chest chest;
+    static public final NamespacedKey playerIdKey = new NamespacedKey(Chesticuffs.getPlugin(), "gameId");
+    static public final NamespacedKey playerInGameKey = new NamespacedKey(Chesticuffs.getPlugin(), "inGame");
+    private final Player playerOne;
+    private Player playerTwo;
+    private final Chest chest;
     int roundNumber, phaseNumber, turn = 0;
     int amountSkipsPlayerOne, amountSkipsPlayerTwo, playerOneAmountPlacedThisRound, playerTwoAmountPlacedThisRound, attackersSelected;
     Integer selectedSlot;
     boolean playerOneSkipped, playerTwoSkipped;
-    Map<Material, Short> playerOneItemsPlaced = new HashMap<>();
-    Map<Material, Short> playerTwoItemsPlaced = new HashMap<>();
-    Map<Integer, Integer> attackersAndDefenders = new HashMap<>();
-    ItemStack selectedItem, validationPane;
-    String id;
-    boolean ranked;
-    long startTime; //This is to make sure people don't exit too early
+    final Map<Material, Short> playerOneItemsPlaced = new HashMap<>();
+    final Map<Material, Short> playerTwoItemsPlaced = new HashMap<>();
+    final Map<Integer, Integer> attackersAndDefenders = new HashMap<>();
+    ItemStack selectedItem;
+    final ItemStack validationPane;
+    final String id;
+    final boolean ranked;
+    final long lastActionAt;
+    final long startTime; //This is to make sure people don't exit too early
+    final List<BukkitTask> timerTasks = new LinkedList<>();
+    boolean ended = false;
+
+    private static class sendMessage implements Runnable{
+        final Player player;
+        final String message;
+        public sendMessage(Player player, String message){
+            this.player = player;
+            this.message = message;
+        }
+
+        public void run(){
+            player.sendMessage(message);
+        }
+    }
 
     public Inventory getPlayerOneInventory() {
         return playerOneInventory;
@@ -56,6 +73,7 @@ public class ChesticuffsGame {
         this.id = id;
         this.ranked = ranked;
         startTime = System.currentTimeMillis();
+        lastActionAt = startTime;
 
         validationPane = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
         ItemMeta meta = validationPane.getItemMeta();
@@ -78,6 +96,45 @@ public class ChesticuffsGame {
         return (playerOne == player || playerTwo == player);
     }
 
+    private class playerTimeOut implements Runnable{
+        @Override
+        public void run() {
+            playerTookTooLong();
+        }
+    }
+    private void playerTookTooLong() {
+        broadcast(ChatColor.RED + "Player " + (turn == 1 ? "one" : "two") + " took too long to play!");
+        endGame(3 - turn);
+    }
+
+    private void action(boolean longer){
+        for(BukkitTask task : timerTasks){
+            task.cancel();
+        }
+        timerTasks.clear();
+        Player player = turn == 1 ? playerOne : playerTwo;
+        if(!longer) {
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "15 seconds left for this turn!"), 300));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "10 seconds left for this turn!"), 400));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "5 seconds left for this turn!"), 500));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "4 seconds left for this turn!"), 520));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "3 seconds left for this turn!"), 540));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "2 seconds left for this turn!"), 560));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "1 second left for this turn!"), 580));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new playerTimeOut(), 600));
+        }else{
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "30 seconds left for this turn!"), 300));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "15 seconds left for this turn!"), 600));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "10 seconds left for this turn!"), 700));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "5 seconds left for this turn!"), 800));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "4 seconds left for this turn!"), 820));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "3 seconds left for this turn!"), 840));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "2 seconds left for this turn!"), 860));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "1 second left for this turn!"), 880));
+            timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new playerTimeOut(), 900));
+        }
+    }
+
     private void setupGame(){
         playerOne.getPersistentDataContainer().set(playerIdKey, PersistentDataType.STRING, id);
         playerTwo.getPersistentDataContainer().set(playerIdKey, PersistentDataType.STRING, id);
@@ -89,7 +146,7 @@ public class ChesticuffsGame {
         chest.getSnapshotInventory().setItem(4, new ItemStack(Material.STICK, 1));
         ItemStack midStick = new ItemStack(Material.STICK, 1);
         ItemMeta meta = midStick.getItemMeta();
-        meta.displayName(Component.text(ChatColor.GRAY + "Skip Turn"));
+        meta.displayName(Component.text(ChatColor.GRAY + "End Turn"));
         midStick.setItemMeta(meta);
         chest.getSnapshotInventory().setItem(13,midStick);
         chest.getSnapshotInventory().setItem(22, new ItemStack(Material.STICK, 1));
@@ -98,7 +155,9 @@ public class ChesticuffsGame {
         broadcastChanges();
         if(!Chesticuffs.isDebugMode) {
             playerOne.openInventory(playerOneInventory);
+            playerTwo.openInventory(playerTwoInventory);
         }
+        action(false);
     }
 
     private void startRound(){
@@ -116,6 +175,15 @@ public class ChesticuffsGame {
 
     public void writeToSticks(){
         ItemStack topStick = chest.getBlockInventory().getItem(4);
+        if(topStick == null){
+            topStick = new ItemStack(Material.STICK);
+            chest.getSnapshotInventory().setItem(4, topStick);
+            chest.update();
+        }
+        if(topStick == null){
+            System.out.println(ChatColor.RED + "Top stick was null :/");
+            return;
+        }
         ItemMeta topStickMeta = topStick.getItemMeta();
         List<Component> topLore = new ArrayList<Component>();
         topStickMeta.displayName(Component.text(ChatColor.YELLOW +  "Round " + roundNumber));
@@ -148,6 +216,15 @@ public class ChesticuffsGame {
         topStick.setItemMeta(topStickMeta);
 
         ItemStack bottomStick = chest.getBlockInventory().getItem(22);
+        if(bottomStick == null){
+            bottomStick = new ItemStack(Material.STICK, 1);
+            chest.getSnapshotInventory().setItem(22, bottomStick);
+            chest.update();
+        }
+        if(bottomStick == null){
+            System.out.println(ChatColor.RED + "Bottom stick was null :/");
+            return;
+        }
         ItemMeta bottomStickMeta = bottomStick.getItemMeta();
         if(roundNumber % 2 == 1){
             bottomStickMeta.displayName(Component.text(ChatColor.RED + "Red Priority"));
@@ -180,8 +257,6 @@ public class ChesticuffsGame {
         String[] traits = item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",");
         List<Integer> validSpaces = new ArrayList<>();
         for(String trait : traits){
-            System.out.println(trait);
-            System.out.println(trait.equals("Gravity"));
             if(trait.equals("Gravity")){
                 for(int x = 5 * turn - 5; x < 5 * turn - 1; x++){
                     for(int y = 2; y >= 0; y--){
@@ -244,13 +319,11 @@ public class ChesticuffsGame {
         short HP = meta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
         String[] traits = meta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",");
         if(x == 0 || x == 8){
-            System.out.println("In defence position!");
             ATK = (short) Math.ceil(ATK * 0.5);
-            DEF = (short) Math.ceil(DEF * 1.5);
+            HP = (short) Math.ceil(HP * 1.5);
         }else if(x == 3 || x == 5){
-            System.out.println("In attack position!");
             ATK = (short) Math.ceil(ATK * 1.5);
-            DEF = (short) Math.ceil(DEF * 0.5);
+            HP = (short) Math.ceil(HP * 0.5);
         }
         int side;
         if(x < 4){
@@ -287,6 +360,15 @@ public class ChesticuffsGame {
                         }
                         break;
                     }
+                }
+                break;
+            case(7):
+                DEF += 1;
+                break;
+            case(8):
+                HP -= 1;
+                if(HP <= 0){
+                    return false;
                 }
                 break;
         }
@@ -434,6 +516,16 @@ public class ChesticuffsGame {
                 ItemHandler.setLore(chest.getBlockInventory().getItem(entry.getKey()));
             }else{
                 attacker = chest.getSnapshotInventory().getItem(entry.getKey());
+
+/*                int defenderX = entry.getValue() % 9;
+                int defenderY = (int) Math.floor(entry.getValue() / 9);
+                int potentialSoftX[] = new int[] {defenderX + 1, defenderX, defenderX - 1, defenderX};
+                int potentialSoftY[] = new int[] {defenderY, defenderY - 1, defenderY, defenderY + 1};
+                for (int i = 0; i < 4; i++){
+                    if(potentialSoftX[i] < 0 || potentialSoftX[i] > 8 || potentialSoftY[i] < 0 || potentialSoftY[i] > 2){
+                        ItemStack item =
+                    }
+                }*/
                 defender = chest.getSnapshotInventory().getItem(entry.getValue());
                 boolean isAttackerImmune = false;
                 boolean isDefenderImmune = false;
@@ -520,6 +612,11 @@ public class ChesticuffsGame {
     }
 
     private void endGame(int winner){
+        if(ended) return;
+        ended = true;
+        for(BukkitTask task : timerTasks){
+            task.cancel();
+        }
         chest.close();
         Chesticuffs.getGames().remove(id);
         chest.getPersistentDataContainer().remove(ChestKeys.idKey);
@@ -531,14 +628,16 @@ public class ChesticuffsGame {
 
         PlayerData playerOneData = DataLoader.getData().get(playerOne.getUniqueId());
         PlayerData playerTwoData = DataLoader.getData().get(playerTwo.getUniqueId());
+        System.out.println("Player one elo: " + playerOneData.getEloRating());
+        System.out.println("Player two elo: " + playerTwoData.getEloRating());
         int playerOneElo = playerOneData.getEloRating();
         int playerTwoElo = playerTwoData.getEloRating();
-        double probabilityOfPlayerOneWin = 1 / (1 + Math.pow(10, (playerTwoElo - playerOneElo) / 400));
+        double probabilityOfPlayerOneWin = 1 / (1 + Math.pow(10, (playerTwoElo - playerOneElo) / 400.0));
         ItemStack coreOne = getCore(1);
         ItemStack coreTwo = getCore(2);
         short coreOneHP, coreTwoHP;
         double outcome;
-        if(coreOne == null){
+        if(coreOne == null || coreTwo == null){
             outcome = 2 - winner;
         }else {
             coreOneHP = coreOne.getItemMeta().getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
@@ -548,25 +647,27 @@ public class ChesticuffsGame {
         if(winner == 1){
             playerOne.sendMessage(ChatColor.RED + "Red wins the game!");
             playerTwo.sendMessage(ChatColor.RED + "Red wins the game!");
+            if(ranked) {
+                playerOneData.setLastWonAt(System.currentTimeMillis());
+                playerOneData.setWinCount(playerOneData.getWinCount() + 1);
+                playerOneData.setStreak(playerOneData.getStreak() + 1);
 
-            playerOneData.setLastWonAt(System.currentTimeMillis());
-            playerOneData.setWinCount(playerOneData.getWinCount() + 1);
-            playerOneData.setStreak(playerOneData.getStreak() + 1);
-
-            playerTwoData.setLossCount(playerTwoData.getLossCount() + 1);
-            playerTwoData.setStreak(0);
+                playerTwoData.setLossCount(playerTwoData.getLossCount() + 1);
+                playerTwoData.setStreak(0);
+            }
 
             outcome = 1;
         }else if(winner == 2){
             playerOne.sendMessage(ChatColor.BLUE + "Blue wins the game!");
             playerTwo.sendMessage(ChatColor.BLUE + "Blue wins the game!");
+            if(ranked) {
+                playerTwoData.setLastWonAt(System.currentTimeMillis());
+                playerTwoData.setWinCount(playerTwoData.getWinCount() + 1);
+                playerTwoData.setStreak(playerTwoData.getStreak() + 1);
 
-            playerTwoData.setLastWonAt(System.currentTimeMillis());
-            playerTwoData.setWinCount(playerTwoData.getWinCount() + 1);
-            playerTwoData.setStreak(playerTwoData.getStreak() + 1);
-
-            playerOneData.setLossCount(playerOneData.getLossCount() + 1);
-            playerOneData.setStreak(0);
+                playerOneData.setLossCount(playerOneData.getLossCount() + 1);
+                playerOneData.setStreak(0);
+            }
             outcome = 0;
         }else{
             playerOne.sendMessage(ChatColor.GREEN + "The game is a draw!");
@@ -579,10 +680,15 @@ public class ChesticuffsGame {
             playerOneData.setEloRating(playerOneElo + change);
             playerTwoData.setEloRating(playerTwoElo - change);
         }
+        System.out.println("Prob: " + probabilityOfPlayerOneWin);
+        System.out.println("Change: " + change);
+        System.out.println("Outcome: " + outcome);
 
         Location worldSpawn = playerOne.getWorld().getSpawnLocation();
         playerOne.teleport(worldSpawn);
         playerTwo.teleport(worldSpawn);
+        playerOne.setBedSpawnLocation(worldSpawn, true);
+        playerTwo.setBedSpawnLocation(worldSpawn, true);
         playerOne.getPersistentDataContainer().set(playerInGameKey, PersistentDataType.BYTE, (byte) 0);
         playerTwo.getPersistentDataContainer().set(playerInGameKey, PersistentDataType.BYTE, (byte) 0);
         chest.getPersistentDataContainer().set(ChestManager.reservedKey, PersistentDataType.BYTE, (byte) 0);
@@ -703,6 +809,7 @@ public class ChesticuffsGame {
 
     private void coreClicked(int coreId){
         System.out.println("Core Clicked Is Run!");
+        chest.update();
         switch(coreId){
             case(3):
                 System.out.println("E gap used!");
@@ -738,6 +845,7 @@ public class ChesticuffsGame {
                 ItemHandler.setLore(core);
                 break;
         }
+        chest.update();
         broadcastChanges();
     }
 
@@ -811,6 +919,7 @@ public class ChesticuffsGame {
                                 playerTwoAmountPlacedThisRound = 0;
                                 playerOne.sendMessage(ChatColor.BLUE + "Blue has placed their core!");
                             }
+                            action(false);
                             broadcastChanges();
                         }else{
                             player.sendMessage(ChatColor.RED + "Please Select A Core");
@@ -821,7 +930,7 @@ public class ChesticuffsGame {
 
                 }else if(e.getCurrentItem() != null){
                     if(e.getCurrentItem().getItemMeta() != null) {
-                        if (e.getCurrentItem().getItemMeta().displayName().equals(Component.text(ChatColor.GRAY + "Skip Turn"))) {
+                        if (e.getCurrentItem().getItemMeta().displayName().equals(Component.text(ChatColor.GRAY + "End Turn"))) {
                             player.sendMessage(ChatColor.RED + "You cannot skip this phase!");
                         }
                     }
@@ -845,7 +954,9 @@ public class ChesticuffsGame {
                         return;
                     }
 
-                    if(!meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("item")){
+                    if(meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING) == null) return;
+
+                    if(!meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equalsIgnoreCase("item")){
                         player.sendMessage(ChatColor.RED + "Select an ITEM");
                         return;
                     }
@@ -855,35 +966,41 @@ public class ChesticuffsGame {
                         return;
                     }
 
-                    int maxAmountPlaced = 3;
+                    int maxAmountPlacedPerItem = 3;
+                    int maxAmountPlacedPerRound = 3;
+
+                    if(getCore(turn).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(8)){
+                        maxAmountPlacedPerRound = 4;
+                    }
+
                     for(String trait :  item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")){
                         if(trait.length() < 9) continue;
                         String[] traitStuff = trait.split(" ");
                         if(traitStuff[0].equalsIgnoreCase("Capbreaker")){
-                            maxAmountPlaced = Integer.valueOf(traitStuff[1]);
+                            maxAmountPlacedPerItem = Integer.valueOf(traitStuff[1]);
                         }
                     }
 
                     if(turn == 1){
-                        if(playerOneAmountPlacedThisRound >= 3){
+                        if(playerOneAmountPlacedThisRound >= maxAmountPlacedPerRound){
                             player.sendMessage(ChatColor.RED + "You have already placed three items this round");
                             return;
                         }
                         Short amountPlaced = playerOneItemsPlaced.get(item.getType());
                         if(amountPlaced != null){
-                            if(amountPlaced >= maxAmountPlaced){
+                            if(amountPlaced >= maxAmountPlacedPerItem){
                                 player.sendMessage(ChatColor.RED + "You have already placed this item the maximum times!");
                                 return;
                             }
                         }
                     }else{
-                        if(playerTwoAmountPlacedThisRound >= 3){
+                        if(playerTwoAmountPlacedThisRound >= maxAmountPlacedPerRound){
                             player.sendMessage(ChatColor.RED + "You have already placed three items this round");
                             return;
                         }
                         Short amountPlaced = playerTwoItemsPlaced.get(item.getType());
                         if(amountPlaced != null){
-                            if(amountPlaced >= maxAmountPlaced){
+                            if(amountPlaced >= maxAmountPlacedPerItem){
                                 player.sendMessage(ChatColor.RED + "You have already placed this item the maximum times!");
                                 return;
                             }
@@ -905,12 +1022,12 @@ public class ChesticuffsGame {
                         System.out.println(e.getSlot());
                         if(item.getItemMeta().getPersistentDataContainer().has(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER)) {
                             Integer effectId = item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER);
-                            coreClicked(effectId);
+                            /*coreClicked(effectId);
                             if (turn == 1) {
                                 broadcast(ChatColor.RED + "All red items gain immunity!");
                             } else {
                                 broadcast(ChatColor.BLUE + "All blue items gain immunity!");
-                            }
+                            }*/
                         }
                     }else if(e.getSlot() == 13){
                         if(turn == 1){
@@ -930,6 +1047,8 @@ public class ChesticuffsGame {
                                 turn = getPriority();
                                 attackersAndDefenders.clear();
                                 attackersSelected = 0;
+                                broadcast( ChatColor.RED + "Attacking phase has started!");
+                                action(true);
                             }else if(phaseNumber == 4){
                                 endRound();
                                 phaseNumber = 1;
@@ -946,9 +1065,11 @@ public class ChesticuffsGame {
                                 }else{
                                     broadcast(ChatColor.BLUE + "Blue Priority");
                                 }
+                                action(false);
                             }
                         }else {
                             turn = 3 - turn;
+                            action(false);
                         }
                         broadcastChanges();
                     }else if(selectedItem == null){
@@ -984,6 +1105,7 @@ public class ChesticuffsGame {
                             playerOne.sendMessage(ChatColor.BLUE + "Blue" + ChatColor.WHITE + " placed their item. Your turn!");
                         }
                         turn = 3 - turn;
+                        action(false);
                         broadcastChanges();
                     }else{
                         selectedItem = null;
@@ -1000,8 +1122,11 @@ public class ChesticuffsGame {
                             phaseNumber = 3;
                             selectedSlot = null;
                             if(getPriority() == 1){
-                                playerTwo.sendMessage(ChatColor.RED + "Red has chosen their attackers!");
+                                broadcast(ChatColor.RED + "Red has chosen their attackers!");
+                            }else{
+                                broadcast(ChatColor.BLUE + "Blue has chosen their attackers!");
                             }
+                            action(true);
                             broadcastChanges();
                         }
                         return;
@@ -1068,6 +1193,7 @@ public class ChesticuffsGame {
                             playerTwoSkipped = false;
                             broadcastChanges();
                             combat();
+                            action(false);
                         }
                         return;
                     }

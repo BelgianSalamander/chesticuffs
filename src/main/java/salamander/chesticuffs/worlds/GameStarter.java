@@ -67,6 +67,8 @@ public class GameStarter {
             events.remove(key);
             reservedChests.remove(key);
             Location chestLocation = chest.getLocation();
+            chestLocation.setX(chestLocation.getX() + 0.5);
+            chestLocation.setZ(chestLocation.getZ() + 0.5);
             Location redLocation = chestLocation.clone();
             Location blueLocation = chestLocation.clone();
 
@@ -149,8 +151,12 @@ public class GameStarter {
 
 
     static public void startGame(Player playerOne, Player playerTwo, Chest chest, boolean ranked){
+        playerOne.sendMessage("Started game with " + playerTwo.getName());
+        playerTwo.sendMessage("Started game with " + playerOne.getName());
         playerOne.setHealth(20);
         playerTwo.setHealth(20);
+        playerOne.setFoodLevel(20);
+        playerTwo.setFoodLevel(20);
         Location playerOneLocation = WorldHandler.generate();
         Location playerTwoLocation = playerOneLocation.clone();
         playerTwoLocation.setWorld(Bukkit.getWorld("world_two"));
@@ -160,10 +166,16 @@ public class GameStarter {
         playerTwo.teleport(playerTwoLocation);
         playerOne.setGameMode(GameMode.SURVIVAL);
         playerTwo.setGameMode(GameMode.SURVIVAL);
+        for(PotionEffect potion : playerOne.getActivePotionEffects()){
+            playerOne.removePotionEffect(potion.getType());
+        }
+        for(PotionEffect potion : playerTwo.getActivePotionEffects()){
+            playerTwo.removePotionEffect(potion.getType());
+        }
         playerOne.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 400, 255));
         playerTwo.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 400, 255));
-        playerOne.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 15 * 60 * 20, 0));
-        playerTwo.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 15 * 60 * 20, 0));
+        playerOne.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 15 * 60 * 20, 0));
+        playerTwo.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 15 * 60 * 20, 0));
         playerOne.getInventory().clear();
         playerTwo.getInventory().clear();
 

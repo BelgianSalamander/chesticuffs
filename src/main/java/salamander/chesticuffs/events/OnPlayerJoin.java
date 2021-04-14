@@ -6,6 +6,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import salamander.chesticuffs.playerData.DataLoader;
 import salamander.chesticuffs.playerData.PlayerData;
 import salamander.chesticuffs.game.ChesticuffsGame;
@@ -25,9 +27,9 @@ public class OnPlayerJoin implements Listener {
             e.getPlayer().getInventory().clear();
         }
         e.getPlayer().getPersistentDataContainer().set(ChesticuffsGame.playerInGameKey, PersistentDataType.BYTE, (byte) 0);
+        e.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 999999, 255));
         if(!DataLoader.getData().containsKey(e.getPlayer().getUniqueId())){
             DataLoader.getData().put(e.getPlayer().getUniqueId(), new PlayerData());
-            System.out.println("Player added to data!");
         }else{
             DataLoader.getData().get(e.getPlayer().getUniqueId()).setLastOnlineAt(System.currentTimeMillis());
         }

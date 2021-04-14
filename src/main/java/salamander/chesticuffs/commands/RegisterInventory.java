@@ -33,8 +33,6 @@ public class RegisterInventory implements CommandExecutor {
                     }
                     if (itemType.equals("core")){
                         hasCore = true;
-                    }else{
-                        System.out.println("Not a core!");
                     }
                 }
             }

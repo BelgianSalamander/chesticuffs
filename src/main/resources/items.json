@@ -945,14 +945,6 @@
         ],
         "flavor": "Speedrunner much?"
     },
-    "ENCHANTED_GOLDEN_APPLE": {
-        "type" : "core",
-        "HP" : 25,
-        "buff" : "On clicked, all allied items gain immunity until end\nof next combat phase",
-        "debuff" : "On use, the core drops down to 5 HP",
-        "flavor" : "Za Warudo!",
-        "effectID" : 3
-    },
     "LAVA_BUCKET": {
         "type" : "core",
         "HP" : 20,
@@ -976,5 +968,21 @@
         "debuff" : "All allied plants lose 1 HP",
         "flavor" : "THE FUNNIEST",
         "effectID" : 6
+    },
+    "DIAMOND_BLOCK" : {
+        "type" : "core",
+        "HP" : 25,
+        "buff" : "Allied items get +1 DEF",
+        "debuff" : "",
+        "flavor" : "That tickles!",
+        "effectID" : 7
+    },
+    "GOLD_BLOCK" : {
+        "type" : "core",
+        "HP" : 20,
+        "buff" : "You can place four items per round",
+        "debuff" : "Allied items get -1 HP",
+        "flavor" : "I got that bling!",
+        "effectID" : 8
     }
 }

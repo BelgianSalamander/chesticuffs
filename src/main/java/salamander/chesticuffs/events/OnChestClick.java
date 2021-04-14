@@ -25,7 +25,6 @@ public class OnChestClick implements Listener {
     public void OnClick(PlayerInteractEvent e){
         if(!e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) return;
         if(!e.getClickedBlock().getType().equals(Material.CHEST)) return;
-        System.out.println(e.getClickedBlock().getLocation().toBlockLocation());
         if(!ChestManager.chests.contains(e.getClickedBlock().getLocation().toBlockLocation())){
             e.getPlayer().sendMessage("That chest is not registered as a chesticuffs chest!");
             return;
