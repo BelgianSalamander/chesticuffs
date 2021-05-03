@@ -1,0 +1,7 @@
+{
+  "queues" : [
+    [["ranked", "competitive"], true, false, 15],
+    [["casual","friendly", "unranked"], false, false, 15],
+    [["testing"], false, true, 1]
+  ]
+}

@@ -16,6 +16,8 @@ import salamander.chesticuffs.ChestManager;
 import salamander.chesticuffs.Chesticuffs;
 import salamander.chesticuffs.playerData.DataLoader;
 import salamander.chesticuffs.game.ChesticuffsGame;
+import salamander.chesticuffs.queue.ChesticuffsQueue;
+import salamander.chesticuffs.queue.QueueHandler;
 import salamander.chesticuffs.worlds.GameStarter;
 import salamander.chesticuffs.worlds.WorldHandler;
 
@@ -29,7 +31,7 @@ public class OnPlayerLeave implements Listener {
             String key = data.get(GameStarter.gameKey, PersistentDataType.STRING);
             data.remove(GameStarter.gameKey);
             Chest chest = GameStarter.reservedChests.get(key);
-            if(chest == null){
+            if (chest == null) {
                 return;
             }
             if (e.getPlayer().getWorld().equals(WorldHandler.getCollectionWorldOne())) {
@@ -64,17 +66,19 @@ public class OnPlayerLeave implements Listener {
             e.getPlayer().teleport(chest.getWorld().getSpawnLocation());
             e.getPlayer().setBedSpawnLocation(chest.getWorld().getSpawnLocation(), false);
 
-            for(BukkitTask task : GameStarter.events.get(key)){
+            for (BukkitTask task : GameStarter.events.get(key)) {
                 task.cancel();
             }
             GameStarter.events.remove(key);
             chest.getPersistentDataContainer().set(ChestManager.reservedKey, PersistentDataType.BYTE, (byte) 0);
             GameStarter.reservedChests.remove(key);
             chest.update();
-        }else if(Chesticuffs.rankedQueue.contains(e.getPlayer())){
-            Chesticuffs.rankedQueue.remove(e.getPlayer());
-        }else {
-            Chesticuffs.unrankedQueue.remove(e.getPlayer());
+        }
+        for (ChesticuffsQueue queue : QueueHandler.queues) {
+            if (queue.getPlayersInQueue().contains(e.getPlayer())) {
+                queue.getPlayersInQueue().remove(e.getPlayer());
+                System.out.println("Removed player from queue");
+            }
         }
     }
 }

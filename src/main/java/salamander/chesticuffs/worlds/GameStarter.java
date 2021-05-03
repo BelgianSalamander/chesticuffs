@@ -33,19 +33,6 @@ public class GameStarter {
         }
     }
 
-    static private class secondaryEffects implements Runnable{
-        Player player;
-
-        public  secondaryEffects(Player player){
-            this.player = player;
-        }
-
-        @Override
-        public void run() {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 17600, 0));
-        }
-    }
-
     static private class BringPlayersToChest implements Runnable{
         Player playerOne, playerTwo;
         Chest chest;
@@ -150,7 +137,7 @@ public class GameStarter {
     }
 
 
-    static public void startGame(Player playerOne, Player playerTwo, Chest chest, boolean ranked){
+    static public void startGame(Player playerOne, Player playerTwo, Chest chest, boolean ranked, int lengthOfGame){
         playerOne.sendMessage("Started game with " + playerTwo.getName());
         playerTwo.sendMessage("Started game with " + playerOne.getName());
         playerOne.setHealth(20);
@@ -166,6 +153,10 @@ public class GameStarter {
         playerTwo.teleport(playerTwoLocation);
         playerOne.setGameMode(GameMode.SURVIVAL);
         playerTwo.setGameMode(GameMode.SURVIVAL);
+        /*playerOne.setExp(0);
+        playerOne.setLevel(15);
+        playerTwo.setExp(0);
+        playerTwo.setLevel(15);*/
         for(PotionEffect potion : playerOne.getActivePotionEffects()){
             playerOne.removePotionEffect(potion.getType());
         }
@@ -174,8 +165,8 @@ public class GameStarter {
         }
         playerOne.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 400, 255));
         playerTwo.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 400, 255));
-        playerOne.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 15 * 60 * 20, 0));
-        playerTwo.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 15 * 60 * 20, 0));
+        playerOne.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, lengthOfGame * 60 * 20, 0));
+        playerTwo.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, lengthOfGame * 60 * 20, 0));
         playerOne.getInventory().clear();
         playerTwo.getInventory().clear();
 
@@ -187,22 +178,41 @@ public class GameStarter {
 
         //Schedule Messages
         eventsThatMightBeCancelled.clear();
-        eventsThatMightBeCancelled.add(Bukkit.getScheduler().runTask(Chesticuffs.getPlugin(), new SendMessage(playerOne, ChatColor.GREEN + "15 Minutes Remain!")));
-        eventsThatMightBeCancelled.add(Bukkit.getScheduler().runTask(Chesticuffs.getPlugin(), new SendMessage(playerTwo, ChatColor.GREEN + "15 Minutes Remain!")));
-        eventsThatMightBeCancelled.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new secondaryEffects(playerOne), 400));
-        eventsThatMightBeCancelled.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new secondaryEffects(playerTwo), 400));
-        broadcastMessageIn(ChatColor.YELLOW + "10 Minutes Remain!", 20 * 60 * 5, playerOne, playerTwo);
-        broadcastMessageIn(ChatColor.GOLD + "5 Minutes Remain!", 20 * 60 * 10, playerOne, playerTwo);
-        broadcastMessageIn(ChatColor.RED + "2 Minutes Remain!", 20 * 60 * 13, playerOne, playerTwo);
-        broadcastMessageIn(ChatColor.RED + "1 Minute Remains!", 20 * 60 * 14, playerOne, playerTwo);
-        broadcastMessageIn(ChatColor.RED + "10 Seconds Remain!", 20 * (60 * 14 + 50), playerOne, playerTwo);
-        broadcastMessageIn(ChatColor.DARK_RED + "5 Seconds Remain!", 20 * (60 * 14 + 55), playerOne, playerTwo);
-        broadcastMessageIn(ChatColor.DARK_RED + "4 Seconds Remain!", 20 * (60 * 14 + 56), playerOne, playerTwo);
-        broadcastMessageIn(ChatColor.DARK_RED + "3 Seconds Remain!", 20 * (60 * 14 + 57), playerOne, playerTwo);
-        broadcastMessageIn(ChatColor.DARK_RED + "2 Seconds Remain!", 20 * (60 * 14 + 58), playerOne, playerTwo);
-        broadcastMessageIn(ChatColor.DARK_RED + "1 Second Remains!", 20 * (60 * 14 + 59), playerOne, playerTwo);
+        eventsThatMightBeCancelled.add(Bukkit.getScheduler().runTask(Chesticuffs.getPlugin(), new SendMessage(playerOne, ChatColor.GREEN + "" + lengthOfGame + " Minute" + (lengthOfGame > 1 ? "s" : "") + " Remain!")));
+        eventsThatMightBeCancelled.add(Bukkit.getScheduler().runTask(Chesticuffs.getPlugin(), new SendMessage(playerTwo, ChatColor.GREEN + "" + lengthOfGame + " Minute" + (lengthOfGame > 1 ? "s" : "") +  "Remain!")));
 
-        eventsThatMightBeCancelled.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new BringPlayersToChest(playerOne, playerTwo, chest, ranked), 20 * 60 * 1)); //TODO change to 15 (at 1 for testing)
+        broadcastMessageIn(ChatColor.RED + "10 Seconds Remain!", 20 * (60 * lengthOfGame - 10), playerOne, playerTwo);
+        broadcastMessageIn(ChatColor.DARK_RED + "5 Seconds Remain!", 20 * (60 * lengthOfGame - 5), playerOne, playerTwo);
+        broadcastMessageIn(ChatColor.DARK_RED + "4 Seconds Remain!", 20 * (60 * lengthOfGame - 4), playerOne, playerTwo);
+        broadcastMessageIn(ChatColor.DARK_RED + "3 Seconds Remain!", 20 * (60 * lengthOfGame - 3), playerOne, playerTwo);
+        broadcastMessageIn(ChatColor.DARK_RED + "2 Seconds Remain!", 20 * (60 * lengthOfGame - 2), playerOne, playerTwo);
+        broadcastMessageIn(ChatColor.DARK_RED + "1 Second Remains!", 20 * (60 * lengthOfGame - 1), playerOne, playerTwo);
+
+        if(lengthOfGame > 2) {
+            broadcastMessageIn(ChatColor.RED + "2 Minutes Remain!", 20 * 60 * lengthOfGame - 120, playerOne, playerTwo);
+        }
+        if(lengthOfGame > 1) {
+            broadcastMessageIn(ChatColor.RED + "1 Minute Remains!", 20 * 60 * lengthOfGame - 60, playerOne, playerTwo);
+        }
+
+        int timeLeft = 5;
+        while(true){
+            if(lengthOfGame > timeLeft){
+                ChatColor color;
+                double ratio = ((double) timeLeft)/ ((double) lengthOfGame);
+                if(ratio >= 0.5) color = ChatColor.GREEN;
+                else if(ratio >= 0.3) color = ChatColor.YELLOW;
+                else if(ratio >= 0.1) color = ChatColor.GOLD;
+                else color = ChatColor.RED;
+
+                broadcastMessageIn(color + "" + timeLeft + " Minutes Remain!", 1200L * (lengthOfGame - timeLeft), playerOne, playerTwo);
+            }else{
+                break;
+            }
+            timeLeft += 5;
+        }
+
+        eventsThatMightBeCancelled.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new BringPlayersToChest(playerOne, playerTwo, chest, ranked), 20 * 60 * lengthOfGame));
 
         String eventsID = GameID.next();
         playerOne.getPersistentDataContainer().set(gameKey, PersistentDataType.STRING, eventsID);

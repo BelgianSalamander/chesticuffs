@@ -24,6 +24,7 @@ public class ChestManager {
     static public List<Location> chests = new LinkedList<>();
     static public NamespacedKey reservedKey = new NamespacedKey(Chesticuffs.getPlugin(), "reserved");
     static public void init(){
+        //Loads chests.json into JSONObject
         JSONParser parser = new JSONParser();
         JSONArray JSONChests;
         JSONObject JSONdata = null;
@@ -36,11 +37,13 @@ public class ChestManager {
         } catch (IOException e){
             e.printStackTrace();
         }
+        //Gets chest data (Couldn't figure out how to just a file that is just an array)
         JSONChests = (JSONArray) JSONdata.get("chests");
         for (Object coordinates : JSONChests){
             JSONArray JSONCoords = (JSONArray) coordinates;
             Location chestLocation = new Location(Bukkit.getWorld((String) JSONCoords.get(3)), (Long) JSONCoords.get(0), (Long) JSONCoords.get(1), (Long) JSONCoords.get(2));
             Block block =  Bukkit.getWorld((String) JSONCoords.get(3)).getBlockAt(chestLocation);
+            //Checks if the blocks are still a chest and adds them to the chest list
             if(block.getType().equals(Material.CHEST)){
                 chests.add(chestLocation.toBlockLocation());
                 Chest chest = (Chest) block.getState();

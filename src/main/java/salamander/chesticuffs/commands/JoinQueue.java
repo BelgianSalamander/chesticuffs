@@ -9,6 +9,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import salamander.chesticuffs.Chesticuffs;
 import salamander.chesticuffs.game.ChesticuffsGame;
+import salamander.chesticuffs.queue.ChesticuffsQueue;
+import salamander.chesticuffs.queue.QueueHandler;
 
 public class JoinQueue implements CommandExecutor {
     @Override
@@ -26,25 +28,40 @@ public class JoinQueue implements CommandExecutor {
                 sender.sendMessage(ChatColor.RED + "You are already in a game!");
                 return true;
             }
-            if(Chesticuffs.rankedQueue.contains(player) || Chesticuffs.unrankedQueue.contains(player)){
-                sender.sendMessage(ChatColor.RED + "You are already in a queue!");
-                return true;
-            }else{
-                if(args.length == 0){
-                    sender.sendMessage(ChatColor.RED + "Please say which queue you want [ranked/casual]");
+            for(ChesticuffsQueue queue : QueueHandler.queues) {
+                if (queue.getPlayersInQueue().contains(player)) {
+                    sender.sendMessage(ChatColor.RED + "You are already in a queue!");
                     return true;
                 }
-                if(args[0].equalsIgnoreCase("ranked") || args[0].equalsIgnoreCase("competitive")){
-                    Chesticuffs.rankedQueue.add(player);
-                }else if(args[0].equalsIgnoreCase("friendly") || args[0].equalsIgnoreCase("unranked") || args[0].equalsIgnoreCase("casual")){
-                    Chesticuffs.unrankedQueue.add(player);
-                }else{
-                    sender.sendMessage(ChatColor.RED + "Please provide a valid queue! (ranked/causal)");
-                    return true;
-                }
-                sender.sendMessage(ChatColor.GREEN + "You have been added to the " + args[0] + " queue!");
+            }
+            if(args.length == 0){
+                sender.sendMessage(ChatColor.RED + "Please say which queue you want. You can check the queues with /queues");
                 return true;
             }
+            boolean addedToQueue = false;
+            for(ChesticuffsQueue queue1 : QueueHandler.queues){
+                if(queue1.getNames().contains(args[0].toLowerCase())){
+                    if(queue1.isModOnly()){
+                        if(!player.isOp()){
+                            player.sendMessage(ChatColor.RED + "You do not have the required permissions to join this queue!");
+                            return true;
+                        }
+                    }
+                    queue1.getPlayersInQueue().add(player);
+                    addedToQueue = true;
+                }
+            }
+            if(!addedToQueue){
+                sender.sendMessage(ChatColor.RED + "Please provide a valid queue! (ranked/causal)");
+                return true;
+            }
+            if(Chesticuffs.isQueueActive()) {
+                sender.sendMessage(ChatColor.GREEN + "You have been added to the " + args[0] + " queue!");
+            } else{
+                sender.sendMessage(ChatColor.RED + "You have been added to the " + args[0] + "queue, however, the queue system is currently disabled and you will not be placed in a game. " +
+                        "If you believe this is an error, please contact the staff team.");
+            }
+            return true;
         }
         return true;
     }

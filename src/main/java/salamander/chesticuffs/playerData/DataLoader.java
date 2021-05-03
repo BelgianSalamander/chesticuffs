@@ -117,7 +117,6 @@ public class DataLoader {
         }
         leagues.clear();
         if(i == 0){
-            System.out.println("No players yet. Leagues cannot be updated!");
             leagues.add(new LeagueTuple("Oxeye Daisy", -69420));
             return;
         }

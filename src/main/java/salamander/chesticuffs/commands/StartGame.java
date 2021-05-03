@@ -21,9 +21,9 @@ public class StartGame implements CommandExecutor {
                 return true;
             }*/
             if(args.length == 0) {
-                GameStarter.startGame(Bukkit.getPlayer(args[0]), Bukkit.getPlayer(args[1]), chest, true);
+                GameStarter.startGame(Bukkit.getPlayer(args[0]), Bukkit.getPlayer(args[1]), chest, true, Integer.parseInt(args[6]));
             }else{
-                GameStarter.startGame(Bukkit.getPlayer(args[0]), Bukkit.getPlayer(args[1]), chest, args[0].equalsIgnoreCase("unranked") || args[0].equalsIgnoreCase("friendly"));
+                GameStarter.startGame(Bukkit.getPlayer(args[0]), Bukkit.getPlayer(args[1]), chest, args[5].equalsIgnoreCase("unranked") || args[5].equalsIgnoreCase("friendly"), Integer.parseInt(args[6]));
             }
         }
         return true;

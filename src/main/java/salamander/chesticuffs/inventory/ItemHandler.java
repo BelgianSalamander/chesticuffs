@@ -131,7 +131,6 @@ public class ItemHandler {
         ItemMeta meta = item.getItemMeta();
         //If item does not have a meta, create one
         if(meta == null) {
-            System.out.println(item.getType().toString());
             meta = Bukkit.getServer().getItemFactory().getItemMeta(item.getType());
         }
         if(!meta.getPersistentDataContainer().has(typeKey, PersistentDataType.STRING)){

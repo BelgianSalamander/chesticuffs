@@ -19,3 +19,4 @@ commands:
   debuggame:
   openinv:
   exitgame:
+  queues:
