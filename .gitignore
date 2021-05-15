@@ -115,3 +115,6 @@ run/
 .settings/
 .classpath
 .project
+
+# Discord Token
+src/main/resources/token

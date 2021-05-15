@@ -19,8 +19,8 @@ public class Leagues {
 
     static public void init(int i){
         leagueMap.clear();
-        int netheriteAmount = (int) Math.min(Math.floor(i/100), 10);
-        int diamondAmount = (int) Math.min(Math.floor(i/20), 50);
+        int netheriteAmount = Math.min(i/50, 10);
+        int diamondAmount = Math.min(i/10, 50);
 
         oxeyeLeague = new ItemStack(Material.SUNFLOWER);
         ItemMeta oxeyeMeta = oxeyeLeague.getItemMeta();

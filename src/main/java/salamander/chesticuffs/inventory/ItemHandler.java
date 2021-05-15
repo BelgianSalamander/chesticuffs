@@ -58,8 +58,16 @@ public class ItemHandler {
 
     public static NamespacedKey getEffectIDKey() { return effectIDKey; }
 
-    static NamespacedKey typeKey, damageKey, defenceKey, healthKey, flavorKey, traitsKey, sideKey, buffKey, debuffKey, effectIDKey;
-    static JSONObject itemData;
+    public static NamespacedKey getDescriptionKey() {
+        return descriptionKey;
+    }
+
+    public static NamespacedKey getUseLimitKey() {
+        return useLimitKey;
+    }
+
+    static NamespacedKey typeKey, damageKey, defenceKey, healthKey, flavorKey, traitsKey, sideKey, buffKey, debuffKey, effectIDKey, descriptionKey, useLimitKey;
+    static public JSONObject itemData;
     static public ItemStack baseCore;
 
 
@@ -122,6 +130,8 @@ public class ItemHandler {
         buffKey = new NamespacedKey(Chesticuffs.getPlugin(), "buff");
         debuffKey = new NamespacedKey(Chesticuffs.getPlugin(), "debuff");
         effectIDKey = new NamespacedKey(Chesticuffs.getPlugin(), "effectID");
+        descriptionKey = new NamespacedKey(Chesticuffs.getPlugin(), "description");
+        useLimitKey = new NamespacedKey(Chesticuffs.getPlugin(), "useLimit");
 
     }
 
@@ -166,6 +176,18 @@ public class ItemHandler {
                     meta.getPersistentDataContainer().set(buffKey, PersistentDataType.STRING, buff);
                     meta.getPersistentDataContainer().set(debuffKey, PersistentDataType.STRING, debuff);
                     meta.getPersistentDataContainer().set(effectIDKey, PersistentDataType.INTEGER, effectID);
+                }else if(itemStats.get("type").equals("usable")){
+                    //Get stats from JSON
+                    String description = (String) itemStats.get("description");
+                    short useLimit = (short) (long) itemStats.get("useLimit");
+                    int effectID = (int) (long) itemStats.get("effectID");
+                    String flavor = (String) itemStats.get("flavor");
+
+                    meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "usable");
+                    meta.getPersistentDataContainer().set(descriptionKey, PersistentDataType.STRING, description);
+                    meta.getPersistentDataContainer().set(useLimitKey, PersistentDataType.SHORT, useLimit);
+                    meta.getPersistentDataContainer().set(effectIDKey, PersistentDataType.INTEGER, effectID);
+                    meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
                 }
                 item.setItemMeta(meta);
                 setLore(item);
@@ -235,6 +257,20 @@ public class ItemHandler {
                     lore.add(Component.text(ChatColor.RED + (dash ? "  " : "- ") + debuffLine));
                     dash = true;
                 }
+            }
+            lore.add(Component.text(ChatColor.WHITE + "\"" + flavor + "\""));
+            meta.lore(lore);
+            item.setItemMeta(meta);
+        }else if(type.equals("usable")){
+            String description = meta.getPersistentDataContainer().get(descriptionKey, PersistentDataType.STRING);
+            String flavor = meta.getPersistentDataContainer().get(flavorKey, PersistentDataType.STRING);
+
+            List<Component> lore = new ArrayList<Component>();
+
+            lore.add(Component.text(ChatColor.YELLOW + "Usable"));
+            lore.add(Component.empty());
+            for(String descriptionLine : description.split("\n")){
+                lore.add(Component.text(ChatColor.GREEN + descriptionLine));
             }
             lore.add(Component.text(ChatColor.WHITE + "\"" + flavor + "\""));
             meta.lore(lore);

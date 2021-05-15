@@ -21,7 +21,7 @@ public class DataLoader {
     private static Map<UUID, PlayerData> data = new HashMap<>();
     private static List<LeagueTuple> leagues = new LinkedList<>();
     public static final World lobby = Bukkit.getWorld("lobby");
-    private static final Location[] locations = {
+    private static final Location[] locations = new Location[]{
             new Location(lobby, -1, 200, -86),
             new Location(lobby, 3, 200, -86),
             new Location(lobby, -3, 196, -86),
@@ -123,8 +123,8 @@ public class DataLoader {
         Collections.sort(eloRatings, Collections.reverseOrder());
 
         int oxeyeIndex = 0;
-        int netheriteIndex = (int) Math.min(Math.floor(i/100), 10);
-        int diamondIndex = (int) Math.min(Math.floor(i/20), 50);
+        int netheriteIndex = (int) Math.min(Math.floor(i/50), 10);
+        int diamondIndex = (int) Math.min(Math.floor(i/10), 50);
         int emeraldIndex = i/10;
         int redstoneIndex = i/5;
         int lapisIndex = i*3/10;

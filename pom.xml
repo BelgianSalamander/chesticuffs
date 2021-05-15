@@ -39,8 +39,7 @@
                         <configuration>
                             <artifactSet>
                                 <includes>
-                                    <include>com.googlecode.json-simple:json-simple</include>
-                                    <include>net.kyori</include>
+                                    <include>net.dv8tion</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
@@ -75,14 +74,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>30.1-jre</version>
-        </dependency>
-        <dependency>
-            <groupId>net.kyori</groupId>
-            <artifactId>adventure-api</artifactId>
-            <version>4.3.0</version>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>16.0.1</version>
         </dependency>
     </dependencies>
 </project>

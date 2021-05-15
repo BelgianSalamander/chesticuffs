@@ -2296,5 +2296,12 @@
         "debuff" : "Allied items get -1 HP",
         "flavor" : "I got that bling!",
         "effectID" : 8
+    },
+    "BELL" : {
+        "type" : "usable",
+        "description" : "Stuns an item for one until the end of next combat phase",
+        "useLimit" : 1,
+        "effectID": 1,
+        "flavor" : ""
     }
 }

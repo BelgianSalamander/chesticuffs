@@ -20,3 +20,5 @@ commands:
   openinv:
   exitgame:
   queues:
+  verify:
+  testlink:

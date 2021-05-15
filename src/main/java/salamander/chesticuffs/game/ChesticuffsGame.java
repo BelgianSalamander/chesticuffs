@@ -23,8 +23,8 @@ import salamander.chesticuffs.inventory.ItemHandler;
 import java.util.*;
 
 public class ChesticuffsGame {
-    static public final NamespacedKey playerIdKey = new NamespacedKey(Chesticuffs.getPlugin(), "gameId");
-    static public final NamespacedKey playerInGameKey = new NamespacedKey(Chesticuffs.getPlugin(), "inGame");
+    static public final NamespacedKey playerIdKey = new NamespacedKey(Chesticuffs.getPlugin(), "gameId");      //Chests and players store a reference to a ChesticuffsGame object using this key
+    static public final NamespacedKey playerInGameKey = new NamespacedKey(Chesticuffs.getPlugin(), "inGame");  //Used to easily check wether a player is in a game or not
     private final Player playerOne;
     private Player playerTwo;
     private final Chest chest;
@@ -32,7 +32,7 @@ public class ChesticuffsGame {
     int amountSkipsPlayerOne, amountSkipsPlayerTwo, playerOneAmountPlacedThisRound, playerTwoAmountPlacedThisRound, attackersSelected;
     Integer selectedSlot;
     boolean playerOneSkipped, playerTwoSkipped;
-    final Map<Material, Short> playerOneItemsPlaced = new HashMap<>();
+    final Map<Material, Short> playerOneItemsPlaced = new HashMap<>(); //Stores how many of each item a player has placed in this game
     final Map<Material, Short> playerTwoItemsPlaced = new HashMap<>();
     final Map<Integer, Integer> attackersAndDefenders = new HashMap<>();
     ItemStack selectedItem;
@@ -40,9 +40,11 @@ public class ChesticuffsGame {
     final String id;
     final boolean ranked;
     final long lastActionAt;
-    final long startTime; //This is to make sure people don't exit too early
+    final long startTime; //This is to make sure people don't accidentally click esc and exit too early
     final List<BukkitTask> timerTasks = new LinkedList<>();
     boolean ended = false;
+    private boolean pendingUsableSelection = false;
+    private int usableTemporarySlot;
 
     private static class sendMessage implements Runnable{
         final Player player;
@@ -67,6 +69,8 @@ public class ChesticuffsGame {
 
     Inventory playerOneInventory, playerTwoInventory;
 
+    //The constructor takes in only a single player because originally, people would create and join games by clicking on a chest
+    //Hence the method addPlayer(Player player)
     public ChesticuffsGame(Player player, Chest chest, String id, boolean ranked){
         playerOne = player;
         this.chest = chest;
@@ -959,6 +963,83 @@ public class ChesticuffsGame {
         broadcastChanges();
     }
 
+    private void usableClicked(ItemStack usable, int slot){
+        selectedItem = usable;
+        ItemMeta usableMeta = usable.getItemMeta();
+        List<Component> usableLore = usableMeta.lore();
+        int effectID = usableMeta.getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER);
+
+        switch(effectID){
+            case(1): //Bell
+                pendingUsableSelection = true;
+                usableLore.set(1, Component.text(ChatColor.RED + "Select a played item!"));
+                break;
+        }
+
+        usableMeta.lore(usableLore);
+        usable.setItemMeta(usableMeta);
+    }
+
+    private void clearLoreInfoLine(ItemStack item){
+        List<Component> lore = item.getItemMeta().lore();
+        lore.set(1, Component.empty());
+        ItemMeta itemMeta = item.getItemMeta();
+        itemMeta.lore(lore);
+        item.setItemMeta(itemMeta);
+    }
+
+    private void usableSelectedUsableItem(int slot){
+        ItemStack clickedItem = chest.getSnapshotInventory().getItem(slot);
+
+        if(clickedItem == null){
+            clearLoreInfoLine(selectedItem);
+            selectedItem = null;
+            return;
+        }
+
+        ItemMeta clickedItemMeta = clickedItem.getItemMeta();
+
+        if(clickedItemMeta == null){
+            clearLoreInfoLine(selectedItem);
+            selectedItem = null;
+            return;
+        }
+
+        if(!clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("item")){
+            clearLoreInfoLine(selectedItem);
+            selectedItem = null;
+            return;
+        }
+
+        int effectID = selectedItem.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER);
+
+        boolean succesfullyUsed = false;
+
+        switch(effectID){
+            case(1): //Bell
+                System.out.println("Bell used!");
+                List<String> traits = new LinkedList<>(Arrays.asList(clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")));
+                if(!traits.contains("Stunned")){
+                    traits.add("Stunned");
+                }
+                traits.remove("");
+                System.out.println(traits);
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getTraitsKey(), PersistentDataType.STRING, String.join(",", traits));
+                succesfullyUsed = true;
+                break;
+        }
+
+        if(succesfullyUsed) {
+            clickedItem.setItemMeta(clickedItemMeta);
+            ItemHandler.setLore(clickedItem);
+            selectedItem.setAmount(selectedItem.getAmount() - 1);
+            chest.getSnapshotInventory().setItem(slot, clickedItem);
+            pendingUsableSelection = false;
+        }
+        selectedItem = null;
+        chest.update();
+    }
+
     public void handleClickEvent(InventoryClickEvent e){
         if(!(e.getWhoClicked() instanceof Player)){
             return;
@@ -1066,13 +1147,10 @@ public class ChesticuffsGame {
 
                     if(meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING) == null) return;
 
-                    if(!meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equalsIgnoreCase("item")){
-                        player.sendMessage(ChatColor.RED + "Select an ITEM");
-                        return;
-                    }
+                    String itemType = meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING);
 
-                    if(isPlayingSpaceFull(turn)){
-                        player.sendMessage("Your playing space is full!");
+                    if(itemType.equalsIgnoreCase("core")){
+                        player.sendMessage(ChatColor.RED + "Select an ITEM or a USABLE");
                         return;
                     }
 
@@ -1083,42 +1161,56 @@ public class ChesticuffsGame {
                         maxAmountPlacedPerRound = 4;
                     }
 
-                    for(String trait :  item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")){
-                        if(trait.length() < 9) continue;
-                        String[] traitStuff = trait.split(" ");
-                        if(traitStuff[0].equalsIgnoreCase("Capbreaker")){
-                            maxAmountPlacedPerItem = Integer.valueOf(traitStuff[1]);
+                    if(itemType.equalsIgnoreCase("item")) {
+                        for (String trait : item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")) {
+                            if (trait.length() < 9) continue;
+                            String[] traitStuff = trait.split(" ");
+                            if (traitStuff[0].equalsIgnoreCase("Capbreaker")) {
+                                maxAmountPlacedPerItem = Integer.valueOf(traitStuff[1]);
+                            }
                         }
+                    }else if(itemType.equalsIgnoreCase("usable")){
+                        maxAmountPlacedPerItem = meta.getPersistentDataContainer().get(ItemHandler.getUseLimitKey(), PersistentDataType.SHORT);
                     }
 
                     if(turn == 1){
                         if(playerOneAmountPlacedThisRound >= maxAmountPlacedPerRound){
-                            player.sendMessage(ChatColor.RED + "You have already placed three items this round");
+                            player.sendMessage(ChatColor.RED + "You have already played three items this round");
                             return;
                         }
                         Short amountPlaced = playerOneItemsPlaced.get(item.getType());
                         if(amountPlaced != null){
                             if(amountPlaced >= maxAmountPlacedPerItem){
-                                player.sendMessage(ChatColor.RED + "You have already placed this item the maximum times!");
+                                player.sendMessage(ChatColor.RED + "You have already played this item the maximum times!");
                                 return;
                             }
                         }
                     }else{
                         if(playerTwoAmountPlacedThisRound >= maxAmountPlacedPerRound){
-                            player.sendMessage(ChatColor.RED + "You have already placed three items this round");
+                            player.sendMessage(ChatColor.RED + "You have already played three items this round");
                             return;
                         }
                         Short amountPlaced = playerTwoItemsPlaced.get(item.getType());
                         if(amountPlaced != null){
                             if(amountPlaced >= maxAmountPlacedPerItem){
-                                player.sendMessage(ChatColor.RED + "You have already placed this item the maximum times!");
+                                player.sendMessage(ChatColor.RED + "You have already played this item the maximum times!");
                                 return;
                             }
                         }
                     }
-                    selectedItem = item;
-                    for(int i : getValidSlots(item)){
-                        currentInv.setItem(i, validationPane);
+
+                    if(isPlayingSpaceFull(turn) & itemType.equalsIgnoreCase("item")){
+                        player.sendMessage("Your playing space is full!");
+                        return;
+                    }
+
+                    if(itemType.equalsIgnoreCase("item")) {
+                        selectedItem = item;
+                        for (int i : getValidSlots(item)) {
+                            currentInv.setItem(i, validationPane);
+                        }
+                    }else if(itemType.equalsIgnoreCase("usable")){
+                        usableClicked(item, e.getSlot());
                     }
                 }else if(e.getClickedInventory().equals(currentInv)){
                     ItemStack item = e.getCurrentItem();
@@ -1180,6 +1272,9 @@ public class ChesticuffsGame {
                         broadcastChanges();
                     }else if(selectedItem == null){
                         return;
+                    }else if(pendingUsableSelection){
+                        usableSelectedUsableItem(e.getSlot());
+                        broadcastChanges();
                     }else if(item.equals(validationPane)){
                         ItemStack itemToBePlaced = new ItemStack(selectedItem);
                         itemToBePlaced.setAmount(1);

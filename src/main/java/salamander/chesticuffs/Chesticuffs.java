@@ -1,6 +1,5 @@
 package salamander.chesticuffs;
 
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import salamander.chesticuffs.playerData.DataLoader;
 import salamander.chesticuffs.commands.*;
@@ -13,13 +12,15 @@ import salamander.chesticuffs.queue.QueueScanner;
 import salamander.chesticuffs.toolbar.ToolbarItems;
 import salamander.chesticuffs.worlds.WorldHandler;
 
+import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.util.*;
 
 public final class Chesticuffs extends JavaPlugin {
-    private static File itemsFile, chestsFile, playerFile, queuesFile;
+    private static File itemsFile, chestsFile, playerFile, queuesFile, tokenFile, discordLinksFile;
     static private boolean queueActive = true;
-    static public boolean isDebugMode = false;
+    static public boolean isDebugMode = false; //TODO Change to false before release!
+    static public Discord discordManager;
     public static int K = 40;
 
     public static File getPlayerFile() {
@@ -28,6 +29,10 @@ public final class Chesticuffs extends JavaPlugin {
 
     public static File getItemsFile() {
         return itemsFile;
+    }
+
+    public static File getDiscordLinksFile() {
+        return discordLinksFile;
     }
 
     public static File getChestsFile(){
@@ -46,6 +51,11 @@ public final class Chesticuffs extends JavaPlugin {
 
     private static JavaPlugin plugin;
     private static Map<String, ChesticuffsGame> games = new HashMap<>();
+
+    public static File getTokenFile() {
+        return tokenFile;
+    }
+
     @Override
     public void onEnable() {
         plugin = this;
@@ -73,10 +83,21 @@ public final class Chesticuffs extends JavaPlugin {
             saveResource("queues.json", false);
         }
 
+        tokenFile = new File(getPlugin().getDataFolder(), "token");
+        if(!tokenFile.exists()) {
+            saveResource("token", false);
+        }
+
+        discordLinksFile = new File(getPlugin().getDataFolder(), "discord.json");
+        if(!discordLinksFile.exists()) {
+            saveResource("discord.json", false);
+        }
+
+
         ItemHandler.init(); //ItemHandler loads items from items.json
         ChestManager.init(); //Loads chests
         ChestKeys.init(); //Create NamespacedKeys for chest Persistent Data Container
-        WorldHandler.init(); //Create worlds
+        WorldHandler.init(); //Create worlds TODO Uncomment before release!
         DataLoader.loadData(); //Loads PlayerData
         ToolbarItems.init(); //Initialises items for a toolbar item menu (currently not in use)
         QueueHandler.init();
@@ -113,14 +134,18 @@ public final class Chesticuffs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PortalEvent(), this);
 
         getServer().getScheduler().runTaskTimer(this, new QueueScanner(), 200, 20); //Schedules queue scanner to run every second
-        getServer().getScheduler().runTaskTimer(this, new updateDataAndStuff(), 1200, 1200); //Updates percentiles and leaderboard every minute
+        //getServer().getScheduler().runTaskTimer(this, new updateDataAndStuff(), 1200, 1200); //Updates percentiles and leaderboard every minute
         getServer().getConsoleSender().sendMessage("Queue Scanner will start in 10 seconds");
+
+        discordManager = new Discord();
     }
 
     @Override
     public void onDisable() {
         ChestManager.saveChests();
         DataLoader.saveData();
+        discordManager.save();
+        discordManager.stop();
     }
 
     static public JavaPlugin getPlugin(){
@@ -144,6 +169,7 @@ public final class Chesticuffs extends JavaPlugin {
         public void run(){
             DataLoader.updatePercentiles(); //Updates the lower-bound elo for every rank
             DataLoader.updateLeaderboard();
+            discordManager.updateMemberRoles();
         }
     }
 }

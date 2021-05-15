@@ -1,6 +1,5 @@
 package salamander.chesticuffs.events;
 
-import com.mojang.datafixers.types.templates.Check;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

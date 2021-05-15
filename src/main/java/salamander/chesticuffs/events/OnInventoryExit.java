@@ -36,7 +36,7 @@ public class OnInventoryExit implements Listener {
         if(game==null) {
             return;
         }
-        if(System.currentTimeMillis() -  game.getStartTime() < 10 * 1000){
+        if(System.currentTimeMillis() -  game.getStartTime() < 10 * 1000 && !Chesticuffs.isDebugMode){
             Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new OpenInv(e.getInventory(), (Player) e.getPlayer()), 1);
             e.getPlayer().sendMessage(ChatColor.RED + "Exited too fast. Putting you back in chest.");
             e.getPlayer().sendMessage(ChatColor.GREEN + "You can exit after ten seconds.");
