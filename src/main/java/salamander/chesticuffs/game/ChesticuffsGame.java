@@ -14,6 +14,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 import salamander.chesticuffs.ChestManager;
 import salamander.chesticuffs.Chesticuffs;
+import salamander.chesticuffs.events.Test;
 import salamander.chesticuffs.playerData.DataLoader;
 import salamander.chesticuffs.playerData.PlayerData;
 import salamander.chesticuffs.commands.RegisterInventory;

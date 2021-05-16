@@ -137,7 +137,7 @@ public final class Chesticuffs extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this, new updateDataAndStuff(), 1200, 1200); //Updates percentiles and leaderboard every minute
         getServer().getConsoleSender().sendMessage("Queue Scanner will start in 10 seconds");
 
-        discordManager = new Discord();
+        //discordManager = new Discord();
     }
 
     @Override

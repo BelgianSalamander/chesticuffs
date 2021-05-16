@@ -1,5 +1,6 @@
 package salamander.chesticuffs.commands;
 
+import org.apache.commons.lang.ObjectUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Chest;
@@ -15,7 +16,10 @@ import org.jetbrains.annotations.NotNull;
 public class SetupItemFrame implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if(!sender.isOp()) return true;
+        if(!sender.isOp()){
+            sender.sendMessage("You do not have permission to run this command!");
+            return true;
+        }
         int x = Integer.valueOf(args[0]);
         int y = Integer.valueOf(args[1]);
         int side = Integer.valueOf(args[2]);
@@ -35,7 +39,18 @@ public class SetupItemFrame implements CommandExecutor {
         }else if(side == 1){
             location = new Location(world, -3.5 + x, 209.5 - y, 2.03125);
         }
-        ItemFrame frame = (ItemFrame) location.getNearbyEntities(0.25, 0.25, 0.25).toArray()[0];
+        
+        //Setting here to be accessible outside of try-catch.
+        ItemFrame frame = null;
+        try
+        {
+             frame = (ItemFrame) location.getNearbyEntities(0.25, 0.25, 0.25).toArray()[0];
+        }
+        catch(NullPointerException e)
+        {
+            sender.sendMessage("NullPointerException!  No local entities detected! Exception message: " + e.getMessage());
+        }
+        
         ItemStack item = chest.getBlockInventory().getItem(y * 9 + x);
         if(item == null){
             frame.setItem(null, false);

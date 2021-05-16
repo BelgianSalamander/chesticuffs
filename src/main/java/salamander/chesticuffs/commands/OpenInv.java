@@ -10,11 +10,16 @@ import salamander.chesticuffs.Chesticuffs;
 public class OpenInv implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if(!sender.isOp()){
+            sender.sendMessage("You do not have permission to run this command!");
+            return true;
+        }
         String key = args[0];
+        Player player = (Player)sender;
         if(args[1].equalsIgnoreCase("red")){
-            ((Player) sender).openInventory(Chesticuffs.getGame(key).getPlayerOneInventory());
-        }else{
-            ((Player) sender).openInventory(Chesticuffs.getGame(key).getPlayerTwoInventory());
+            player.openInventory(Chesticuffs.getGame(key).getPlayerOneInventory());
+        }else if(args[1].equalsIgnoreCase("blue")){
+            player.openInventory(Chesticuffs.getGame(key).getPlayerTwoInventory());
         }
         return true;
     }
