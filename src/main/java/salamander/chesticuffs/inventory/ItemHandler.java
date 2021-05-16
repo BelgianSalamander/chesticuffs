@@ -15,6 +15,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import salamander.chesticuffs.Chesticuffs;
+import salamander.chesticuffs.traits.Trait;
+import salamander.chesticuffs.traits.TraitsHolder;
 
 import java.io.*;
 import java.util.*;
@@ -66,7 +68,9 @@ public class ItemHandler {
         return useLimitKey;
     }
 
-    static NamespacedKey typeKey, damageKey, defenceKey, healthKey, flavorKey, traitsKey, sideKey, buffKey, debuffKey, effectIDKey, descriptionKey, useLimitKey;
+    public static NamespacedKey getTraitValueKey() {return traitValueKey; }
+
+    static NamespacedKey typeKey, damageKey, defenceKey, healthKey, flavorKey, traitsKey, sideKey, buffKey, debuffKey, effectIDKey, descriptionKey, useLimitKey, traitValueKey;
     static public JSONObject itemData;
     static public ItemStack baseCore;
 
@@ -81,9 +85,7 @@ public class ItemHandler {
             InputStream is = new FileInputStream(Chesticuffs.getItemsFile());
             String data = readFromInputStream(is);
             itemData = (JSONObject) parser.parse(data);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        } catch (IOException e){
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
         JSONObject newItemData = (JSONObject) itemData.clone();
@@ -154,12 +156,14 @@ public class ItemHandler {
                     JSONArray traits = (JSONArray) itemStats.get("traits");
                     String flavor = (String) itemStats.get("flavor");
 
+                    TraitsHolder holder = new TraitsHolder(traits);
+
                     //Give the actual item those stats
                     meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "item");
                     meta.getPersistentDataContainer().set(damageKey, PersistentDataType.SHORT, ATK);
                     meta.getPersistentDataContainer().set(defenceKey, PersistentDataType.SHORT, DEF);
                     meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, HP);
-                    meta.getPersistentDataContainer().set(traitsKey, PersistentDataType.STRING, String.join(",", traits));
+                    holder.setTraitsOf(meta);
                     meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
                 }else if(itemStats.get("type").equals("core")){
                     //Get stats from json
@@ -216,7 +220,7 @@ public class ItemHandler {
             short ATK = meta.getPersistentDataContainer().get(damageKey, PersistentDataType.SHORT);
             short DEF = meta.getPersistentDataContainer().get(defenceKey, PersistentDataType.SHORT);
             short HP = meta.getPersistentDataContainer().get(healthKey, PersistentDataType.SHORT);
-            String traits = meta.getPersistentDataContainer().get(traitsKey, PersistentDataType.STRING);
+            TraitsHolder traits = new TraitsHolder(item);
             String flavor = meta.getPersistentDataContainer().get(flavorKey, PersistentDataType.STRING);
             List<Component> lore = new ArrayList<Component>();
             lore.add(Component.text(ChatColor.YELLOW + "Item"));
@@ -228,7 +232,7 @@ public class ItemHandler {
             if(!traits.equals("")) {
                 lore.add(Component.text(""));
                 lore.add(Component.text(ChatColor.RED + "" + ChatColor.BOLD + "Traits"));
-                for (String trait : traits.split(",")) {
+                for (String trait : traits.getTraitsToDisplay()) {
                     lore.add(Component.text(ChatColor.RED + " - " + ChatColor.BOLD + trait));
                 }
             }

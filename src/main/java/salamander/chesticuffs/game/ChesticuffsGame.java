@@ -19,6 +19,8 @@ import salamander.chesticuffs.playerData.PlayerData;
 import salamander.chesticuffs.commands.RegisterInventory;
 import salamander.chesticuffs.inventory.ChestKeys;
 import salamander.chesticuffs.inventory.ItemHandler;
+import salamander.chesticuffs.traits.Trait;
+import salamander.chesticuffs.traits.TraitsHolder;
 
 import java.util.*;
 
@@ -258,25 +260,23 @@ public class ChesticuffsGame {
     }
 
     private List<Integer> getValidSlots(ItemStack item){
-        String[] traits = item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",");
+        TraitsHolder traits = new TraitsHolder(item);
         List<Integer> validSpaces = new ArrayList<>();
-        for(String trait : traits){
-            if(trait.equals("Gravity")){
-                for(int x = 5 * turn - 5; x < 5 * turn - 1; x++){
-                    for(int y = 2; y >= 0; y--){
-                        ItemStack itemToCheck = chest.getBlockInventory().getItem(y * 9 + x);
-                        if(itemToCheck == null){
-                            validSpaces.add(y * 9 + x);
-                            break;
-                        }
-                        if(itemToCheck.getType().equals(Material.AIR)){
-                            validSpaces.add(y * 9 + x);
-                            break;
-                        }
+        if(traits.hasTrait(Trait.GRAVITY)){
+            for(int x = 5 * turn - 5; x < 5 * turn - 1; x++){
+                for(int y = 2; y >= 0; y--){
+                    ItemStack itemToCheck = chest.getBlockInventory().getItem(y * 9 + x);
+                    if(itemToCheck == null){
+                        validSpaces.add(y * 9 + x);
+                        break;
+                    }
+                    if(itemToCheck.getType().equals(Material.AIR)){
+                        validSpaces.add(y * 9 + x);
+                        break;
                     }
                 }
-                return validSpaces;
             }
+            return validSpaces;
         }
         for(int y = 0; y < 3; y++){
             for(int x = 5 * turn - 5; x < 5 * turn - 1; x++){
@@ -321,7 +321,7 @@ public class ChesticuffsGame {
         short ATK = meta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
         short DEF = meta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT);
         short HP = meta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
-        String[] traits = meta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",");
+        TraitsHolder traits = new TraitsHolder(meta);
         if(x == 0 || x == 8){
             ATK = (short) Math.ceil(ATK * 0.5);
             HP = (short) Math.ceil(HP * 1.5);
@@ -340,22 +340,16 @@ public class ChesticuffsGame {
                 HP += 1;
                 break;
             case(2):
-                for(String trait : traits){
-                    if(trait.equalsIgnoreCase("Plant")){
-                        HP = (short) Math.ceil(HP * 0.5);
-                        break;
-                    }
+                if(traits.hasTrait(Trait.PLANT)){
+                    HP = (short) Math.ceil(HP * 0.5);
                 }
                 break;
             case(6):
-                for(String trait : traits){
-                    if(trait.equalsIgnoreCase("Plant")){
-                        HP -= 1;
-                        DEF += 1;
-                        if(HP <= 0){
-                            return false;
-                        }
-                        break;
+                if(traits.hasTrait(Trait.PLANT)){
+                    HP -= 1;
+                    DEF += 1;
+                    if(HP <= 0){
+                        return false;
                     }
                 }
                 break;
@@ -369,36 +363,22 @@ public class ChesticuffsGame {
                 }
                 break;
         }
-        for(String trait : item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")){
-            if(trait.equalsIgnoreCase("Fragile")){
-                HP = 1;
-                break;
-            }
+        if(traits.hasTrait(Trait.FRAGILE)){
+            HP = 1;
+            DEF = 1;
         }
         boolean coalBlockCorePlaced = getCore(side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5) ||
                 getCore(3 - side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5);
         if(coalBlockCorePlaced){
-            List<String> traitsList = new LinkedList<>();
-            boolean flammable = false;
-            for(String trait : traits){
-                if(trait.equalsIgnoreCase("flammable")){
-                    flammable = true;
-                    break;
-                }
-                traitsList.add(trait);
-            }
 
-            if(!flammable){
-                traitsList.add("Flammable");
-                meta.getPersistentDataContainer().set(ItemHandler.getTraitsKey(), PersistentDataType.STRING, String.join(",", traitsList));
-            }
+            traits.addTrait(Trait.FLAMMABLE);
         }
         meta.getPersistentDataContainer().set(ItemHandler.getDamageKey(), PersistentDataType.SHORT, ATK);
         meta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
         meta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, HP);
+        traits.setTraitsOf(meta);
         item.setItemMeta(meta);
         ItemHandler.setLore(item);
-
         return true;
     }
 
@@ -413,17 +393,15 @@ public class ChesticuffsGame {
                     for(int x = side * 5 - 5; x < side * 5 - 1; x++){
                         for(int y = 0; y < 3; y++){
                             ItemStack item = chest.getSnapshotInventory().getItem(y * 9 + x);
+                            TraitsHolder traits = new TraitsHolder(item);
                             if(item == null) continue;
                             if(item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING) == null) continue;
                             if(item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("item")){
                                 short HP = item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
                                 ItemMeta meta = item.getItemMeta();
-                                for(String trait : item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")){
-                                    if(trait.equalsIgnoreCase("plant")){
-                                        meta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, (short) (HP + 1));
-                                        item.setItemMeta(meta);
-                                        break;
-                                    }
+                                if(traits.hasTrait(Trait.PLANT)){
+                                    meta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, (short) (HP + 1));
+                                    item.setItemMeta(meta);
                                 }
                                 item.setItemMeta(meta);
                                 ItemHandler.setLore(item);
@@ -442,12 +420,10 @@ public class ChesticuffsGame {
             if(item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("item")){
                 short HP = item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
                 ItemMeta meta = item.getItemMeta();
-                for(String trait : item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")){
-                    if(trait.equalsIgnoreCase("Poison")){
-                        meta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, (short) Math.max(HP - 1, 1));
-                        item.setItemMeta(meta);
-                        break;
-                    }
+                TraitsHolder traits = new TraitsHolder(meta);
+                if(traits.hasTrait(Trait.POISONED)){
+                    meta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, (short) Math.max(HP - 1, 1));
+                    item.setItemMeta(meta);
                 }
             }
         }
@@ -480,14 +456,11 @@ public class ChesticuffsGame {
                 }
                 short HP = meta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
                 int fireDamage = 1;
-                for(String trait : meta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")){
-                    if(trait.equalsIgnoreCase("flammable")){
-                        fireDamage = 2;
-                        break;
-                    }else if(trait.equalsIgnoreCase("Fire Resistance")){
-                        fireDamage = 0;
-                        break;
-                    }
+                TraitsHolder traits = new TraitsHolder(meta);
+                if(traits.hasTrait(Trait.FIRE_RESISTANT)){
+                    fireDamage = 0;
+                }else if(traits.hasTrait(Trait.FIRE_RESISTANT)){
+                    fireDamage = 2;
                 }
                 if(fireDamage >= HP){
                     chest.getSnapshotInventory().setItem(i, null);
@@ -547,23 +520,13 @@ public class ChesticuffsGame {
                 int defenderY = (int) Math.floor(entry.getValue() / 9);
                 int potentialSoftX[] = new int[] {defenderX + 1, defenderX, defenderX - 1, defenderX};
                 int potentialSoftY[] = new int[] {defenderY, defenderY - 1, defenderY, defenderY + 1};
-                System.out.println(potentialSoftX);
-                System.out.println(potentialSoftY);
 
                 for (int i = 0; i < 4; i++){
                     if(!(potentialSoftX[i] < 0 || potentialSoftX[i] > 8 || potentialSoftY[i] < 0 || potentialSoftY[i] > 2 || potentialSoftX[i] == 4)){
                         ItemStack potentialDefender = chest.getSnapshotInventory().getItem(potentialSoftY[i] * 9 + potentialSoftX[i]);
                         if(potentialDefender == null) continue;
                         if(!potentialDefender.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equalsIgnoreCase("item")) continue;
-                        String[] traits = potentialDefender.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",");
-                        boolean isSoft = false;
-                        for(String trait : traits){
-                            if(trait.equalsIgnoreCase("soft")){
-                                isSoft = true;
-                                break;
-                            }
-                        }
-                        if(isSoft){
+                        if(Trait.SOFT.isInItem(potentialDefender)){
                             broadcast(ChatColor.GREEN + potentialDefender.getType().toString() + " tanks damage for " + defender.getType().toString());
                             defender = potentialDefender;
                             break;
@@ -581,17 +544,8 @@ public class ChesticuffsGame {
                     if(!(potentialSoftXForAttacker[i] < 0 || potentialSoftXForAttacker[i] > 8 || potentialSoftYForAttacker[i] < 0 || potentialSoftYForAttacker[i] > 2 || potentialSoftXForAttacker[i] == 4)){
                         ItemStack potentialAttacker = chest.getSnapshotInventory().getItem(potentialSoftYForAttacker[i] * 9 + potentialSoftXForAttacker[i]);
                         if(potentialAttacker == null) continue;
-                        if(!potentialAttacker.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equalsIgnoreCase("item")) continue;
-                        String[] traits = potentialAttacker.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",");
-                        System.out.println(traits);
-                        boolean isSoft = false;
-                        for(String trait : traits){
-                            if(trait.equalsIgnoreCase("soft")){
-                                isSoft = true;
-                                break;
-                            }
-                        }
-                        if(isSoft){
+                        if(!potentialAttacker.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("item")) continue;
+                        if(Trait.SOFT.isInItem(potentialAttacker)){
                             broadcast(ChatColor.GREEN + potentialAttacker.getType().toString() + " tanks damage for " + defender.getType().toString());
                             attacker = potentialAttacker;
                             break;
@@ -599,7 +553,7 @@ public class ChesticuffsGame {
                     }
                 }
 
-                boolean isAttackerImmune = false;
+                /*boolean isAttackerImmune = false;
                 boolean isAttackerFlammable = false;
                 boolean isAttackerFlame = false;
                 boolean isAttackerFireResistant = false;
@@ -607,12 +561,15 @@ public class ChesticuffsGame {
                 boolean isDefenderImmune = false;
                 boolean isDefenderFlammable = false;
                 boolean isDefenderFlame = false;
-                boolean isDefenderFireResistant = false;
+                boolean isDefenderFireResistant = false;*/
 
                 attackingItemMeta = attacker.getItemMeta();
                 defendingItemMeta = defender.getItemMeta();
 
-                String[] attackerTraits = attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",");
+                TraitsHolder attackingItemTraits = new TraitsHolder(attackingItemMeta);
+                TraitsHolder defendingItemTraits = new TraitsHolder(defendingItemMeta);
+
+                /*String[] attackerTraits = attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",");
                 for(String trait : attackerTraits){
                     if(trait.equalsIgnoreCase("Immunity")){
                         isAttackerImmune = true;
@@ -642,57 +599,50 @@ public class ChesticuffsGame {
                     }else if(trait.equalsIgnoreCase("Fire Resistant")){
                         isDefenderFireResistant = true;
                     }
-                }
-
+                }*/
                 attackerHP = attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
                 defenderHP = defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
 
                 int attackerDamage = Math.max((properAttackerDamage - defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT)), 0);
                 int defenderDamage = Math.max((properDefenderDamage - attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT)), 0);
 
-                if(isAttackerFlame){
-                    attackerDamage *= 1 - (isDefenderFireResistant ? 1 : 0) + (isDefenderFlammable ? 1 : 0);
+                if(attackingItemTraits.hasTrait(Trait.FLAME)){
+                    if(defendingItemTraits.hasTrait(Trait.FIRE_RESISTANT)){
+                        attackerDamage = 0;
+                    }else if(defendingItemTraits.hasTrait(Trait.FLAMMABLE)){
+                        attackerDamage *= 2;
+                    }
                 }
 
-                if(isDefenderFlame){
-                    defenderDamage *= 1 - (isAttackerFireResistant ? 1 : 0) + (isAttackerFlammable ? 1 : 0);
+                if(defendingItemTraits.hasTrait(Trait.FLAME)){
+                    if(attackingItemTraits.hasTrait(Trait.FIRE_RESISTANT)){
+                        defenderDamage = 0;
+                    }else if(defendingItemTraits.hasTrait(Trait.FLAMMABLE)){
+                        defenderDamage *= 2;
+                    }
                 }
 
-                if(!isDefenderImmune) {
+                if(!defendingItemTraits.hasTrait(Trait.IMMUNE)) {
                     defenderHP -= attackerDamage;
                     broadcast(defenderColor + defender.getType().toString() + ChatColor.GRAY + " (Slot " + attackerSlot + ") " + " takes " +
                             attackerColor + attackerDamage + ChatColor.GRAY + " damage!");
                 }
 
-                if(!isAttackerImmune) {
+                if(!attackingItemTraits.hasTrait(Trait.IMMUNE)) {
                     attackerHP -= defenderDamage;
                     broadcast(attackerColor + attacker.getType().toString() + ChatColor.GRAY + " (Slot " + defenderSlot + ") " + " takes " +
                             defenderColor + defenderDamage + ChatColor.GRAY + " damage!");
                 }
 
                 if(attackerHP <= 0) {
-                    for (String trait : attackerTraits) {
-                        if (trait.equalsIgnoreCase("shrapnel")) {
-                            defenderHP -= 2;
-                            break;
-                        }
+                    if(attackingItemTraits.hasTrait(Trait.SHRAPNEL)){
+                        defenderHP -= 2;
                     }
                 }
 
                 if(defenderHP <= 0){
-                    for (String trait : defenderTraits) {
-                        if (trait.equalsIgnoreCase("shrapnel")) {
-                            if(attackerHP > 0 && attackerHP <= 2){
-                                for (String otherTrait : attackerTraits) {
-                                    if (otherTrait.equalsIgnoreCase("shrapnel")) {
-                                        defenderHP -= 2;
-                                        break;
-                                    }
-                                }
-                            }
-                            attackerHP -= 2;
-                            break;
-                        }
+                    if(defendingItemTraits.hasTrait(Trait.SHRAPNEL)){
+                        attackerHP -= 2;
                     }
                 }
 
@@ -706,6 +656,8 @@ public class ChesticuffsGame {
                 }else{
                     attackingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, attackerHP);
                 }
+                attackingItemTraits.removeTrait(Trait.IMMUNE);
+                defendingItemTraits.removeTrait(Trait.IMMUNE);
                 attacker.setItemMeta(attackingItemMeta);
                 defender.setItemMeta(defendingItemMeta);
                 ItemHandler.setLore(attacker);
@@ -941,12 +893,10 @@ public class ChesticuffsGame {
                         if(!itemMeta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equalsIgnoreCase("item")) {
                             continue;
                         };
-                        List<String> traits = new LinkedList<>();
-                        for(String trait : itemMeta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")){
-                            traits.add(trait);
+                        TraitsHolder traits = new TraitsHolder(itemMeta);
+                        if(traits.addTrait(Trait.IMMUNE)){
+                            traits.setTraitsOf(itemMeta);
                         }
-                        traits.add("Immunity");
-                        itemMeta.getPersistentDataContainer().set(ItemHandler.getTraitsKey(), PersistentDataType.STRING, String.join(",", traits));
                         currentItem.setItemMeta(itemMeta);
                         ItemHandler.setLore(currentItem);
                     }
@@ -1018,14 +968,11 @@ public class ChesticuffsGame {
         switch(effectID){
             case(1): //Bell
                 System.out.println("Bell used!");
-                List<String> traits = new LinkedList<>(Arrays.asList(clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")));
-                if(!traits.contains("Stunned")){
-                    traits.add("Stunned");
+                TraitsHolder traits = new TraitsHolder(clickedItemMeta);
+                if(traits.addTrait(Trait.STUNNED)){
+                    traits.setTraitsOf(clickedItemMeta);
+                    succesfullyUsed = true;
                 }
-                traits.remove("");
-                System.out.println(traits);
-                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getTraitsKey(), PersistentDataType.STRING, String.join(",", traits));
-                succesfullyUsed = true;
                 break;
         }
 
@@ -1137,6 +1084,7 @@ public class ChesticuffsGame {
                         return;
                     }
                     ItemMeta meta = item.getItemMeta();
+                    TraitsHolder itemTraits = new TraitsHolder(meta);
                     if(meta == null){
                         return;
                     }
@@ -1162,12 +1110,8 @@ public class ChesticuffsGame {
                     }
 
                     if(itemType.equalsIgnoreCase("item")) {
-                        for (String trait : item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",")) {
-                            if (trait.length() < 9) continue;
-                            String[] traitStuff = trait.split(" ");
-                            if (traitStuff[0].equalsIgnoreCase("Capbreaker")) {
-                                maxAmountPlacedPerItem = Integer.valueOf(traitStuff[1]);
-                            }
+                        if(itemTraits.hasTrait(Trait.CAPBREAKER)){
+                            maxAmountPlacedPerItem = itemTraits.getLevelOf(Trait.CAPBREAKER);
                         }
                     }else if(itemType.equalsIgnoreCase("usable")){
                         maxAmountPlacedPerItem = meta.getPersistentDataContainer().get(ItemHandler.getUseLimitKey(), PersistentDataType.SHORT);
