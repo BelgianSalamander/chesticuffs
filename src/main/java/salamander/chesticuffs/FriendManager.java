@@ -1,4 +1,6 @@
 package salamander.chesticuffs;
 
-public class FriendManager {
+public class FriendManager
+{
+
 }
