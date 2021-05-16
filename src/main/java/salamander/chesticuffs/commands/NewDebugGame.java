@@ -17,7 +17,11 @@ import salamander.chesticuffs.inventory.ChestKeys;
 public class NewDebugGame implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if(!sender.isOp()) return true;
+        if(!sender.isOp()){
+            sender.sendMessage("You do not have permission to run this command!");
+            return true;
+        }
+
         if(!Chesticuffs.isDebugMode){
             sender.sendMessage(ChatColor.RED + "Not in debug mode!");
             return true;

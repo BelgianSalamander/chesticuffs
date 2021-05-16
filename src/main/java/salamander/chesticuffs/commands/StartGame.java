@@ -13,7 +13,10 @@ import salamander.chesticuffs.worlds.GameStarter;
 public class StartGame implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if(!sender.isOp()) return true;
+        if(!sender.isOp()){
+            sender.sendMessage("You do not have permission to run this command!");
+            return true;
+        }
         if(command.getName().equalsIgnoreCase("StartGame")){
             Chest chest = (Chest) ((Player) sender).getWorld().getBlockAt(Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4])).getState();
             /*if(!ChestManager.chests.contains(chest.getLocation())){
