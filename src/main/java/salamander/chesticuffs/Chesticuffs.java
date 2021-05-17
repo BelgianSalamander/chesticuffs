@@ -19,7 +19,7 @@ import java.util.*;
 public final class Chesticuffs extends JavaPlugin {
     private static File itemsFile, chestsFile, playerFile, queuesFile, tokenFile, discordLinksFile;
     static private boolean queueActive = true;
-    static public boolean isDebugMode = false; //TODO Change to false before release!
+    static public boolean isDebugMode = false;
     static public Discord discordManager;
     public static int K = 40;
 
@@ -97,7 +97,7 @@ public final class Chesticuffs extends JavaPlugin {
         ItemHandler.init(); //ItemHandler loads items from items.json
         ChestManager.init(); //Loads chests
         ChestKeys.init(); //Create NamespacedKeys for chest Persistent Data Container
-        WorldHandler.init(); //Create worlds TODO Uncomment before release!
+        //WorldHandler.init(); //Create worlds TODO Uncomment before release!
         DataLoader.loadData(); //Loads PlayerData
         ToolbarItems.init(); //Initialises items for a toolbar item menu (currently not in use)
         QueueHandler.init();

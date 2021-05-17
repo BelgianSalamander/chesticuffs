@@ -18,7 +18,8 @@ public enum Trait {
     IMMUNE ("Immune"),
     STUNNED ("Stunned"),
     POISONED ("Poisoned"),
-    CAPBREAKER ("Capbreaker", 0);
+    CAPBREAKER ("Capbreaker", 0),
+    JUMPSTART ("Jumpstart");
 
     private String displayName;
     static final int amountOfValues = 1;

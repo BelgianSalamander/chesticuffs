@@ -47,14 +47,18 @@ public class TraitsHolder {
             int index = trait.length() - 1;
             while( Character.isDigit(trait.charAt(index))){
                 level *= 10;
-                level += (int) trait.charAt(index);
+                level += Character.getNumericValue(trait.charAt(index));
+                index--;
             }
             if(level == 0){
                 index += 1;
             }
-            int traitIndex = Trait.valueOf(trait.toLowerCase().substring(0, index).replace(" ", "_")).toInt();
+            Trait traitObject =Trait.valueOf(trait.toUpperCase().substring(0, index).replace(" ", "_"));
+            int traitIndex = traitObject.toInt();
             traits[traitIndex] = true;
-            values[Trait.fromInt(traitIndex).getValueIndex()] = level;
+            if(traitObject.getValueIndex() != -1) {
+                values[traitObject.getValueIndex()] = level;
+            }
         }
     }
 
@@ -126,7 +130,8 @@ public class TraitsHolder {
         int n = 0;
         for(boolean hasTrait : traits){
             if(hasTrait){
-                traitNames.add(Trait.fromInt(n).getDisplayName());
+                Trait trait = Trait.fromInt(n);
+                traitNames.add(trait.getDisplayName() + ((trait.getValueIndex() != -1) ? " " + values[trait.getValueIndex()] : ""));
             }
             n++;
         }
@@ -135,7 +140,7 @@ public class TraitsHolder {
     }
 
     public int getLevelOf(Trait trait){
-        return values[trait.toInt()];
+        return values[trait.getValueIndex()];
     }
 
     @Override

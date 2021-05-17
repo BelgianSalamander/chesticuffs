@@ -134,6 +134,7 @@ public class ItemHandler {
         effectIDKey = new NamespacedKey(Chesticuffs.getPlugin(), "effectID");
         descriptionKey = new NamespacedKey(Chesticuffs.getPlugin(), "description");
         useLimitKey = new NamespacedKey(Chesticuffs.getPlugin(), "useLimit");
+        traitValueKey = new NamespacedKey(Chesticuffs.getPlugin(), "traitlevel");
 
     }
 
