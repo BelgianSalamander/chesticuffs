@@ -1,5 +1,6 @@
 package salamander.chesticuffs.commands;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -20,6 +21,12 @@ public class RemoveChest implements CommandExecutor {
             sender.sendMessage("You do not have permission to run this command!");
             return true;
         }
+
+        if(!(sender instanceof Player)){
+            sender.sendMessage(ChatColor.RED + "Only players can execute this command");
+            return true;
+        }
+
         if(!command.getName().equalsIgnoreCase("removechest")) return true;
         Player player = (Player) sender;
         try
