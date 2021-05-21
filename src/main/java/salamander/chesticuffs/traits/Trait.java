@@ -26,16 +26,23 @@ public enum Trait {
     SOAK("Soak"),
     OVERGROWTH("Overgrowth"),
     STICKY("Sticky"),
-    LIGHT("Light");
+    LIGHT("Light"),
+    COMPOSTABLE("Compostable", false);
 
     private String displayName;
     static final int amountOfValues = 1;
     private int valueIndex;
+    private boolean displayed = true;
     public final static int length = Trait.values().length;
 
     private Trait(String displayName){
         this.displayName = displayName;
         this.valueIndex = -1;
+    }
+    private Trait(String displayName, boolean displayed){
+        this.displayName = displayName;
+        this.valueIndex = -1;
+        this.displayed = false;
     }
     private Trait(String displayName, int valueIndex){
         this.displayName = displayName;
@@ -52,6 +59,10 @@ public enum Trait {
 
     public boolean isInItem(ItemStack item){
         return isInMeta(item.getItemMeta());
+    }
+
+    public boolean shouldBeDisplayed(){
+        return displayed;
     }
 
     public boolean isInMeta(ItemMeta meta){

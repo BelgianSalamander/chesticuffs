@@ -131,6 +131,7 @@ public class TraitsHolder {
         for(boolean hasTrait : traits){
             if(hasTrait){
                 Trait trait = Trait.fromInt(n);
+                if(trait.shouldBeDisplayed())
                 traitNames.add(trait.getDisplayName() + ((trait.getValueIndex() != -1) ? " " + values[trait.getValueIndex()] : ""));
             }
             n++;

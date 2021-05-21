@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import org.apache.commons.lang.ObjectUtils;
 import org.bukkit.*;
 import org.bukkit.block.Chest;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -933,8 +934,35 @@ public class ChesticuffsGame {
 
         switch(effectID){
             case(1): //Bell
+            case(2): //Stonecutter
+            case(3): //Grindstone
                 pendingUsableSelection = true;
                 usableLore.set(1, Component.text(ChatColor.RED + "Select a played item!"));
+                break;
+            case(4):
+                for(int x = 10 - turn * 5; x < 14 - turn * 5; x++){
+                    for(int y  = 0; y < 3; y++){
+                        try {
+                            ItemStack currentItem = chest.getSnapshotInventory().getItem(y * 9 + x);
+                            if(Trait.COMPOSTABLE.isInItem(currentItem)){
+                                System.out.println(y * 9 + x);
+                                broadcast(ChatColor.RED + currentItem.getType().toString() + " (Slot " + (y * 9 + x) + ") was killed by composter!");
+                                chest.getSnapshotInventory().setItem(y * 9 + x, null);
+                            }
+                        }catch(NullPointerException e){}
+                    }
+                }
+                selectedItem.setAmount(selectedItem.getAmount() - 1);
+                chest.update();
+                if(turn == 1){
+                    playerTwo.sendMessage(ChatColor.RED + "Red used a composter! Your turn!");
+                }else{
+                    playerOne.sendMessage(ChatColor.BLUE + "Blue used a composter! Your turn!");
+                }
+                incrementUsageCountOf(selectedItem);
+                turn = 3 - turn;
+                selectedItem = null;
+                broadcastChanges();
                 break;
         }
 
@@ -943,11 +971,15 @@ public class ChesticuffsGame {
     }
 
     private void clearLoreInfoLine(ItemStack item){
-        List<Component> lore = item.getItemMeta().lore();
-        lore.set(1, Component.empty());
-        ItemMeta itemMeta = item.getItemMeta();
-        itemMeta.lore(lore);
-        item.setItemMeta(itemMeta);
+        try {
+            List<Component> lore = item.getItemMeta().lore();
+            lore.set(1, Component.empty());
+            ItemMeta itemMeta = item.getItemMeta();
+            itemMeta.lore(lore);
+            item.setItemMeta(itemMeta);
+        }catch (NullPointerException e){
+
+        }
     }
 
     private void usableSelectedUsableItem(int slot){
@@ -976,6 +1008,7 @@ public class ChesticuffsGame {
         int effectID = selectedItem.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER);
 
         boolean succesfullyUsed = false;
+        boolean clickedItemDied = false;
 
         switch(effectID){
             case(1): //Bell
@@ -986,17 +1019,81 @@ public class ChesticuffsGame {
                     succesfullyUsed = true;
                 }
                 break;
+            case(2):
+                short ATK = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
+                short DEF = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT);
+                short HP = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
+
+                broadcast(ChatColor.GREEN + "Stonecutter has been used!");
+
+                ATK++;
+                DEF--;
+                HP--;
+
+                if(DEF < 0) DEF  = 0;
+
+                if(HP <= 0){
+                    clickedItemDied = true;
+                }else{
+                    clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDamageKey(), PersistentDataType.SHORT, ATK);
+                    clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                    clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, HP);
+                }
+
+                succesfullyUsed = true;
+                break;
+            case(3):
+                Map<Enchantment, Integer> enchantments = clickedItemMeta.getEnchants();
+                int amount = enchantments.size();
+                if(amount > 0) {
+                    int index = (new Random()).nextInt(amount);
+                    int i = 0;
+                    for(Enchantment enchant : enchantments.keySet()){
+                        if(i == index){
+                            clickedItemMeta.removeEnchant(enchant);
+                            succesfullyUsed = true;
+                            break;
+                        }
+
+                        i++;
+                    }
+                }
+                break;
         }
 
         if(succesfullyUsed) {
-            clickedItem.setItemMeta(clickedItemMeta);
-            ItemHandler.setLore(clickedItem);
+            if(!clickedItemDied) {
+                clickedItem.setItemMeta(clickedItemMeta);
+                chest.getSnapshotInventory().setItem(slot, clickedItem);
+                ItemHandler.setLore(clickedItem);
+            }else{
+                chest.getSnapshotInventory().setItem(slot, null);
+            }
             selectedItem.setAmount(selectedItem.getAmount() - 1);
-            chest.getSnapshotInventory().setItem(slot, clickedItem);
             pendingUsableSelection = false;
+            incrementUsageCountOf(selectedItem);
         }
+        clearLoreInfoLine(selectedItem);
         selectedItem = null;
         chest.update();
+    }
+
+    private void incrementUsageCountOf(ItemStack item){
+        Map<Material, Short> itemPlacedMap;
+        if(turn == 1){
+            itemPlacedMap = playerOneItemsPlaced;
+            playerOneAmountPlacedThisRound++;
+        }else{
+            itemPlacedMap = playerTwoItemsPlaced;
+            playerTwoAmountPlacedThisRound++;
+        }
+
+        Short amountPlaced = itemPlacedMap.get(item.getType());
+        if(amountPlaced == null){
+            itemPlacedMap.put(item.getType(), (short) 1);
+        }else{
+            itemPlacedMap.put(item.getType(), (short)(amountPlaced + 1));
+        }
     }
 
     public void placeItem(ItemStack item, int slot){
@@ -1188,6 +1285,7 @@ public class ChesticuffsGame {
                         }
                     }else if(itemType.equalsIgnoreCase("usable")){
                         maxAmountPlacedPerItem = meta.getPersistentDataContainer().get(ItemHandler.getUseLimitKey(), PersistentDataType.SHORT);
+                        System.out.println("Max amount for usable : " + maxAmountPlacedPerItem);
                     }
 
                     if(turn == 1){
@@ -1196,6 +1294,7 @@ public class ChesticuffsGame {
                             return;
                         }
                         Short amountPlaced = playerOneItemsPlaced.get(item.getType());
+                        System.out.println("Amount of this item placed : " + amountPlaced);
                         if(amountPlaced != null){
                             if(amountPlaced >= maxAmountPlacedPerItem){
                                 player.sendMessage(ChatColor.RED + "You have already played this item the maximum times!");

@@ -583,7 +583,8 @@
         "DEF": 0,
         "HP": 2,
         "traits": [
-            "Plant"
+            "Plant",
+            "Compostable"
         ],
         "flavor": "Happy Halloween! :)"
     },
@@ -643,7 +644,8 @@
         "DEF": 1,
         "HP": 2,
         "traits": [
-            "Plant"
+            "Plant",
+            "Compostable"
         ],
         "flavor": "What a pair."
     },
@@ -711,7 +713,8 @@
         "traits": [
             "Capbreaker 1",
             "Soft",
-            "Flammable"
+            "Flammable",
+            "Compostable"
         ],
         "flavor": "Hay, I'm here to pay bale."
     },
@@ -1133,7 +1136,9 @@
         "ATK": 0,
         "DEF" : 1,
         "HP" : 3,
-        "traits" : [],
+        "traits" : [
+            "Compostable"
+        ],
         "flavor" : ""
     },
     "RED_NETHER_BRICKS": {
@@ -1296,7 +1301,8 @@
         "HP" : 1,
         "traits" : [
             "Plant",
-            "Flammable"
+            "Flammable",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1309,7 +1315,8 @@
         "DEF" : 0,
         "HP" : 1,
         "traits" : [
-            "Plant"
+            "Plant",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1333,7 +1340,8 @@
         "HP" : 1,
         "traits" : [
             "Plant",
-            "Aquatic"
+            "Aquatic",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1345,7 +1353,8 @@
         "HP" : 2,
         "traits" : [
             "Plant",
-            "Aquatic"
+            "Aquatic",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1391,7 +1400,8 @@
         "DEF" : 0,
         "HP" : 1,
         "traits" : [
-            "Flammable"
+            "Flammable",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1402,7 +1412,8 @@
         "DEF" : 0,
         "HP" : 1,
         "traits" : [
-            "Plant"
+            "Plant",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1413,7 +1424,8 @@
         "DEF" : 0,
         "HP" : 2,
         "traits" : [
-            "Plant"
+            "Plant",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1439,7 +1451,8 @@
         "DEF" : 0,
         "HP" : 2,
         "traits" : [
-            "Plant"
+            "Plant",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1451,7 +1464,8 @@
         "HP" : 1,
         "traits" : [
             "Jumpstart",
-            "Plant"
+            "Plant",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1530,7 +1544,8 @@
         "HP" : 2,
         "traits" : [
             "Plant",
-            "Thorns"
+            "Thorns",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1595,7 +1610,8 @@
         "DEF" : 1,
         "HP" : 3,
         "traits" : [
-            "Flammable"
+            "Flammable",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1646,7 +1662,8 @@
         "HP" : 2,
         "traits" : [
             "Overgrowth",
-            "Plant"
+            "Plant",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1830,7 +1847,8 @@
         "DEF" : 0,
         "HP" : 2,
         "traits" : [
-            "Plant"
+            "Plant",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1842,7 +1860,8 @@
         "HP" : 2,
         "traits" : [
             "Plant",
-            "Thorns"
+            "Thorns",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -1855,7 +1874,8 @@
         "DEF" : 0,
         "HP" : 2,
         "traits" : [
-            "Plant"
+            "Plant",
+            "Compostable"
         ],
         "flavor" : ""
     },
@@ -2153,7 +2173,9 @@
         "ATK": 1,
         "DEF" : 1,
         "HP" : 1,
-        "traits" : [],
+        "traits" : [
+            "Compostable"
+        ],
         "flavor" : ""
     },
     "BEE_NEST": {
@@ -2306,23 +2328,23 @@
     },
     "STONECUTTER" : {
         "type" : "usable",
-        "description" : "Raises an item's ATK by +1 at the cost of -1 DEF and -1 HP.  If the item is already at 1 HP it will die!",
+        "description" : "Raises an item's ATK by +1 at the cost of -1 DEF and -1 HP.\nIf the item is already at 1 HP it will die!",
         "useLimit" : 3,
-        "effectID": 1,
+        "effectID": 2,
         "flavor" : "Strong enough to cut stone, but not my abs of steel!"
     },
     "GRINDSTONE" : {
         "type" : "usable",
         "description" : "Removes an enchantment off any item on the board.",
         "useLimit" : 1,
-        "effectID": 1,
+        "effectID": 3,
         "flavor" : "Strong enough to cut stone, but not these abs of steel!"
     },
     "COMPOSTER" : {
         "type" : "usable",
-        "description" : "If your opponent has any item which can be composted. This insta-kills it.",
+        "description" : "If your opponent has any item which can be composted,\nThis insta-kills it.",
         "useLimit" : 3,
-        "effectID": 1,
+        "effectID": 4,
         "flavor" : "Now, full of worms!"
     }
 }
