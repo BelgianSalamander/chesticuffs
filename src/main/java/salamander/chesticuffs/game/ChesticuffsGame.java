@@ -1,6 +1,7 @@
 package salamander.chesticuffs.game;
 
 import net.kyori.adventure.text.Component;
+import org.apache.commons.lang.ObjectUtils;
 import org.bukkit.*;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.HumanEntity;
@@ -164,6 +165,8 @@ public class ChesticuffsGame {
             playerTwo.openInventory(playerTwoInventory);
         }
         action(false);
+        playerOneAmountPlacedThisRound = 0;
+        playerTwoAmountPlacedThisRound = 0;
     }
 
     private void startRound(){
@@ -290,6 +293,8 @@ public class ChesticuffsGame {
                 }
             }
         }
+        validSpaces.remove(Integer.valueOf(10));
+        validSpaces.remove(Integer.valueOf(16));
         return validSpaces;
     }
 
@@ -335,43 +340,50 @@ public class ChesticuffsGame {
         }else{
             side = 2;
         }
-        switch(getCore(side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER)){
-            case(1):
-                HP += 1;
-                break;
-            case(2):
-                if(traits.hasTrait(Trait.PLANT)){
-                    HP = (short) Math.ceil(HP * 0.5);
-                }
-                break;
-            case(6):
-                if(traits.hasTrait(Trait.PLANT)){
-                    HP -= 1;
+        ItemStack core = getCore(side);
+        if(core != null) {
+            switch (core.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER)) {
+                case (1):
+                    HP += 1;
+                    break;
+                case (2):
+                    if (traits.hasTrait(Trait.PLANT)) {
+                        HP = (short) Math.ceil(HP * 0.5);
+                    }
+                    break;
+                case (6):
+                    if (traits.hasTrait(Trait.PLANT)) {
+                        HP -= 1;
+                        DEF += 1;
+                        if (HP <= 0) {
+                            return false;
+                        }
+                    }
+                    break;
+                case (7):
                     DEF += 1;
-                    if(HP <= 0){
+                    break;
+                case (8):
+                    HP -= 1;
+                    if (HP <= 0) {
                         return false;
                     }
-                }
-                break;
-            case(7):
-                DEF += 1;
-                break;
-            case(8):
-                HP -= 1;
-                if(HP <= 0){
-                    return false;
-                }
-                break;
+                    break;
+            }
         }
         if(traits.hasTrait(Trait.FRAGILE)){
             HP = 1;
             DEF = 1;
         }
-        boolean coalBlockCorePlaced = getCore(side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5) ||
-                getCore(3 - side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5);
-        if(coalBlockCorePlaced){
+        try {
+            boolean coalBlockCorePlaced = getCore(side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5) ||
+                    getCore(3 - side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5);
+            if (coalBlockCorePlaced) {
 
-            traits.addTrait(Trait.FLAMMABLE);
+                traits.addTrait(Trait.FLAMMABLE);
+            }
+        }catch(NullPointerException e){
+
         }
         meta.getPersistentDataContainer().set(ItemHandler.getDamageKey(), PersistentDataType.SHORT, ATK);
         meta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
@@ -987,6 +999,39 @@ public class ChesticuffsGame {
         chest.update();
     }
 
+    public void placeItem(ItemStack item, int slot){
+        ItemStack itemToBePlaced = new ItemStack(item);
+        itemToBePlaced.setAmount(1);
+        boolean placed = buffItem(itemToBePlaced, slot % 9);
+        item.setAmount(item.getAmount() - 1);
+        if(placed) chest.getSnapshotInventory().setItem(slot, itemToBePlaced);
+        else{
+            broadcast(ChatColor.RED + "Item was placed but died immediately. LOL!");
+        }
+        chest.update();
+        if (turn == 1){
+            playerOneSkipped = false;
+            playerOneAmountPlacedThisRound += 1;
+            if(playerOneItemsPlaced.get(itemToBePlaced.getType()) == null){
+                playerOneItemsPlaced.put(itemToBePlaced.getType(), (short) 1);
+            }else{
+                playerOneItemsPlaced.put(itemToBePlaced.getType(), (short) (playerOneItemsPlaced.get(itemToBePlaced.getType()) + 1));
+            }
+            playerTwo.sendMessage(ChatColor.RED + "Red" + ChatColor.WHITE + " placed their item. Your turn!");
+        }else {
+            playerTwoSkipped = false;
+            playerTwoAmountPlacedThisRound += 1;
+            if (playerTwoItemsPlaced.get(itemToBePlaced.getType()) == null) {
+                playerTwoItemsPlaced.put(itemToBePlaced.getType(), (short) 1);
+            } else {
+                playerTwoItemsPlaced.put(itemToBePlaced.getType(), (short) (playerTwoItemsPlaced.get(itemToBePlaced.getType()) + 1));
+            }
+            playerOne.sendMessage(ChatColor.BLUE + "Blue" + ChatColor.WHITE + " placed their item. Your turn!");
+        }
+        action(false);
+        broadcastChanges();
+    }
+
     public void handleClickEvent(InventoryClickEvent e){
         if(!(e.getWhoClicked() instanceof Player)){
             return;
@@ -1035,16 +1080,23 @@ public class ChesticuffsGame {
                         return;
                     }
                     if(meta.getPersistentDataContainer().has(ItemHandler.getTypeKey(), PersistentDataType.STRING)){
-                        if(meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("core")){
+                        String type = meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING);
+                        if(type.equals("core")){
                             ItemStack core = item.clone();
                             core.setAmount(1);
                             chest.getSnapshotInventory().setItem(4 + turn * 6, core);
                             item.setAmount(item.getAmount()-1);
                             chest.update();
-                            //Next Turn
-                            if(turn == getPriority()){
-                                turn = 3 - turn;
+                            if(turn == 1){
                                 playerTwo.sendMessage(ChatColor.RED + "Red has placed their core!");
+                            }else{
+                                playerOne.sendMessage(ChatColor.BLUE + "Blue has placed their core!");
+                            }
+                            //Next Turn
+                            if(getCore(1) == null || getCore(2) == null){
+                                turn = 3 - turn;
+                                if(getCore(turn) != null)
+                                    turn = 3 - turn;
                             }else{
                                 turn = getPriority();
                                 selectedItem = null;
@@ -1053,22 +1105,43 @@ public class ChesticuffsGame {
                                 playerTwoSkipped = false;
                                 amountSkipsPlayerOne = 0;
                                 amountSkipsPlayerTwo = 0;
-                                playerOneAmountPlacedThisRound = 0;
-                                playerTwoAmountPlacedThisRound = 0;
-                                playerOne.sendMessage(ChatColor.BLUE + "Blue has placed their core!");
                             }
                             action(false);
                             broadcastChanges();
+                        }else if (type.equals("item")){
+                            if(turn == 1){
+                                if(playerOneAmountPlacedThisRound >= 3) {
+                                    playerOne.sendMessage(ChatColor.RED + "You have already placed three items this round!");
+                                    return;
+                                }
+                            }else if(playerTwoAmountPlacedThisRound >= 3){
+                                playerTwo.sendMessage(ChatColor.RED + "You have already placed three items this round!");
+                                return;
+                            }
+                            if(Trait.JUMPSTART.isInMeta(meta)) {
+                                selectedItem = item;
+                                for (int i : getValidSlots(item)) {
+                                    currentInv.setItem(i, validationPane);
+                                }
+                            }
                         }else{
-                            player.sendMessage(ChatColor.RED + "Please Select A Core");
+                            selectedItem = null;
+                            player.sendMessage(ChatColor.RED + "Please select a core or a jumpstart item");
                         }
                     }else{
-                        player.sendMessage(ChatColor.RED + "Please Select A Core");
+                        selectedItem = null;
+                        player.sendMessage(ChatColor.RED + "Please select a core or a jumpstart item");
                     }
 
                 }else if(e.getCurrentItem() != null){
                     if(e.getCurrentItem().getItemMeta() != null) {
-                        if (e.getCurrentItem().getItemMeta().displayName().equals(Component.text(ChatColor.GRAY + "End Turn"))) {
+                        if(e.getCurrentItem().equals(validationPane)) {
+                            placeItem(selectedItem, e.getSlot());
+                            turn = 3 - turn;
+                            if (getCore(turn) != null)
+                                turn = 3 - turn;
+                            broadcastChanges();
+                        }else if(e.getCurrentItem().getItemMeta().displayName().equals(Component.text(ChatColor.GRAY + "End Turn"))) {
                             player.sendMessage(ChatColor.RED + "You cannot skip this phase!");
                         }
                     }
@@ -1220,37 +1293,8 @@ public class ChesticuffsGame {
                         usableSelectedUsableItem(e.getSlot());
                         broadcastChanges();
                     }else if(item.equals(validationPane)){
-                        ItemStack itemToBePlaced = new ItemStack(selectedItem);
-                        itemToBePlaced.setAmount(1);
-                        boolean placed = buffItem(itemToBePlaced, e.getSlot() % 9);
-                        selectedItem.setAmount(selectedItem.getAmount() - 1);
-                        if(placed) chest.getSnapshotInventory().setItem(e.getSlot(), itemToBePlaced);
-                        else{
-                            broadcast(ChatColor.RED + "Item was placed but died immediately. LOL!");
-                        }
-                        chest.update();
-                        if (turn == 1){
-                            playerOneSkipped = false;
-                            playerOneAmountPlacedThisRound += 1;
-                            if(playerOneItemsPlaced.get(itemToBePlaced.getType()) == null){
-                                playerOneItemsPlaced.put(itemToBePlaced.getType(), (short) 1);
-                            }else{
-                                playerOneItemsPlaced.put(itemToBePlaced.getType(), (short) (playerOneItemsPlaced.get(itemToBePlaced.getType()) + 1));
-                            }
-                            playerTwo.sendMessage(ChatColor.RED + "Red" + ChatColor.WHITE + " placed their item. Your turn!");
-                        }else{
-                            playerTwoSkipped = false;
-                            playerTwoAmountPlacedThisRound += 1;
-                            if(playerTwoItemsPlaced.get(itemToBePlaced.getType()) == null){
-                                playerTwoItemsPlaced.put(itemToBePlaced.getType(), (short) 1);
-                            }else{
-                                playerTwoItemsPlaced.put(itemToBePlaced.getType(), (short) (playerTwoItemsPlaced.get(itemToBePlaced.getType()) + 1));
-                            }
-                            playerOne.sendMessage(ChatColor.BLUE + "Blue" + ChatColor.WHITE + " placed their item. Your turn!");
-                        }
+                        placeItem(selectedItem, e.getSlot());
                         turn = 3 - turn;
-                        action(false);
-                        broadcastChanges();
                     }else{
                         selectedItem = null;
                         broadcastChanges();

@@ -19,7 +19,14 @@ public enum Trait {
     STUNNED ("Stunned"),
     POISONED ("Poisoned"),
     CAPBREAKER ("Capbreaker", 0),
-    JUMPSTART ("Jumpstart");
+    JUMPSTART ("Jumpstart"),
+    BREAK ("Break"),
+    AQUATIC("Aquatic"),
+    WITHER("Wither"),
+    SOAK("Soak"),
+    OVERGROWTH("Overgrowth"),
+    STICKY("Sticky"),
+    LIGHT("Light");
 
     private String displayName;
     static final int amountOfValues = 1;
