@@ -2278,7 +2278,7 @@
         "HP" : 20,
         "buff" : "All allied plants gain 1 DEF",
         "debuff" : "All allied plants lose 1 HP",
-        "flavor" : "THE FUNNIEST",
+        "flavor" : "THE FUNNIEST!",
         "effectID" : 6
     },
     "DIAMOND_BLOCK" : {
@@ -2302,6 +2302,27 @@
         "description" : "Stuns an item for one until the end of next combat phase",
         "useLimit" : 1,
         "effectID": 1,
-        "flavor" : ""
+        "flavor" : "Ringy ringy... ringy ringy"
+    },
+    "STONECUTTER" : {
+        "type" : "usable",
+        "description" : "Raises an item's ATK by +1 at the cost of -1 DEF and -1 HP.  If the item is already at 1 HP it will die!",
+        "useLimit" : 3,
+        "effectID": 1,
+        "flavor" : "Strong enough to cut stone, but not my abs of steel!"
+    },
+    "GRINDSTONE" : {
+        "type" : "usable",
+        "description" : "Removes an enchantment off any item on the board.",
+        "useLimit" : 1,
+        "effectID": 1,
+        "flavor" : "Strong enough to cut stone, but not these abs of steel!"
+    },
+    "COMPOSTER" : {
+        "type" : "usable",
+        "description" : "If your opponent has any item which can be composted. This insta-kills it.",
+        "useLimit" : 3,
+        "effectID": 1,
+        "flavor" : "Now, full of worms!"
     }
 }

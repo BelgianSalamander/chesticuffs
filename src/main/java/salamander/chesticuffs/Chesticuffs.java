@@ -118,6 +118,9 @@ public final class Chesticuffs extends JavaPlugin {
         getPlugin().getCommand("openinv").setExecutor(new OpenInv()); //Open's the red or blue inventory of a game from a given gameID
         getPlugin().getCommand("exitgame").setExecutor(new ExitGame()); //Remove's you from your current game
         getPlugin().getCommand("queues").setExecutor(new Queues());
+        //getPlugin().getCommand("friends").setExecutor(new Friends()); //Used by players to manage their friends list
+        //getPlugin().getCommand("msg").setExecutor(new Friends());
+        //getPlugin().getCommand("message").setExecutor(new Friends());
 
         //Register events
         getServer().getPluginManager().registerEvents(new OnPickUp(), this); //Registers items when players pick them up
