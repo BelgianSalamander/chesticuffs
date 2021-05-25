@@ -147,55 +147,60 @@ public class ItemHandler {
             meta = Bukkit.getServer().getItemFactory().getItemMeta(item.getType());
         }
         if(!meta.getPersistentDataContainer().has(typeKey, PersistentDataType.STRING)){
-            if(itemData.containsKey(item.getType().toString())){
-                JSONObject itemStats = (JSONObject) itemData.get(item.getType().toString());
-                if(itemStats.get("type").equals("item")){
-                    //Get stats from json
-                    short ATK = (short) (long) itemStats.get("ATK");
-                    short DEF = (short) (long) itemStats.get("DEF");
-                    short HP = (short) (long) itemStats.get("HP");
-                    JSONArray traits = (JSONArray) itemStats.get("traits");
-                    String flavor = (String) itemStats.get("flavor");
+            try {
+                if (itemData.containsKey(item.getType().toString())) {
+                    JSONObject itemStats = (JSONObject) itemData.get(item.getType().toString());
+                    if (itemStats.get("type").equals("item")) {
+                        //Get stats from json
+                        short ATK = (short) (long) itemStats.get("ATK");
+                        short DEF = (short) (long) itemStats.get("DEF");
+                        short HP = (short) (long) itemStats.get("HP");
+                        JSONArray traits = (JSONArray) itemStats.get("traits");
+                        String flavor = (String) itemStats.get("flavor");
 
-                    TraitsHolder holder = new TraitsHolder(traits);
+                        TraitsHolder holder = new TraitsHolder(traits);
 
-                    //Give the actual item those stats
-                    meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "item");
-                    meta.getPersistentDataContainer().set(damageKey, PersistentDataType.SHORT, ATK);
-                    meta.getPersistentDataContainer().set(defenceKey, PersistentDataType.SHORT, DEF);
-                    meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, HP);
-                    holder.setTraitsOf(meta);
-                    meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
-                }else if(itemStats.get("type").equals("core")){
-                    //Get stats from json
-                    short HP = (short) (long) itemStats.get("HP");
-                    String buff = (String) itemStats.get("buff");
-                    String debuff = (String) itemStats.get("debuff");
-                    String flavor = (String) itemStats.get("flavor");
-                    int effectID = (int) (long) itemStats.get("effectID");
+                        //Give the actual item those stats
+                        meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "item");
+                        meta.getPersistentDataContainer().set(damageKey, PersistentDataType.SHORT, ATK);
+                        meta.getPersistentDataContainer().set(defenceKey, PersistentDataType.SHORT, DEF);
+                        meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, HP);
+                        holder.setTraitsOf(meta);
+                        meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
+                    } else if (itemStats.get("type").equals("core")) {
+                        //Get stats from json
+                        short HP = (short) (long) itemStats.get("HP");
+                        String buff = (String) itemStats.get("buff");
+                        String debuff = (String) itemStats.get("debuff");
+                        String flavor = (String) itemStats.get("flavor");
+                        int effectID = (int) (long) itemStats.get("effectID");
 
-                    //Give the actual item those stats
-                    meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "core");
-                    meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, HP);
-                    meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
-                    meta.getPersistentDataContainer().set(buffKey, PersistentDataType.STRING, buff);
-                    meta.getPersistentDataContainer().set(debuffKey, PersistentDataType.STRING, debuff);
-                    meta.getPersistentDataContainer().set(effectIDKey, PersistentDataType.INTEGER, effectID);
-                }else if(itemStats.get("type").equals("usable")){
-                    //Get stats from JSON
-                    String description = (String) itemStats.get("description");
-                    short useLimit = (short) (long) itemStats.get("useLimit");
-                    int effectID = (int) (long) itemStats.get("effectID");
-                    String flavor = (String) itemStats.get("flavor");
+                        //Give the actual item those stats
+                        meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "core");
+                        meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, HP);
+                        meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
+                        meta.getPersistentDataContainer().set(buffKey, PersistentDataType.STRING, buff);
+                        meta.getPersistentDataContainer().set(debuffKey, PersistentDataType.STRING, debuff);
+                        meta.getPersistentDataContainer().set(effectIDKey, PersistentDataType.INTEGER, effectID);
+                    } else if (itemStats.get("type").equals("usable")) {
+                        //Get stats from JSON
+                        String description = (String) itemStats.get("description");
+                        short useLimit = (short) (long) itemStats.get("useLimit");
+                        int effectID = (int) (long) itemStats.get("effectID");
+                        String flavor = (String) itemStats.get("flavor");
 
-                    meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "usable");
-                    meta.getPersistentDataContainer().set(descriptionKey, PersistentDataType.STRING, description);
-                    meta.getPersistentDataContainer().set(useLimitKey, PersistentDataType.SHORT, useLimit);
-                    meta.getPersistentDataContainer().set(effectIDKey, PersistentDataType.INTEGER, effectID);
-                    meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
+                        meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "usable");
+                        meta.getPersistentDataContainer().set(descriptionKey, PersistentDataType.STRING, description);
+                        meta.getPersistentDataContainer().set(useLimitKey, PersistentDataType.SHORT, useLimit);
+                        meta.getPersistentDataContainer().set(effectIDKey, PersistentDataType.INTEGER, effectID);
+                        meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
+                    }
+                    item.setItemMeta(meta);
+                    setLore(item);
                 }
-                item.setItemMeta(meta);
-                setLore(item);
+            }catch (NullPointerException e){
+                Chesticuffs.LOGGER.log("Error when registering " + item.getType().toString());
+                e.printStackTrace();
             }
         }
     }

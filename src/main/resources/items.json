@@ -2346,5 +2346,12 @@
         "useLimit" : 3,
         "effectID": 4,
         "flavor" : "Now, full of worms!"
+    },
+    "ENDER_CHEST" : {
+        "type" : "usable",
+        "description" : "Swap the positions of two items",
+        "useLimit" : 1,
+        "effectID" : 5,
+        "flavor" : ""
     }
 }

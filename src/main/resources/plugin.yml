@@ -23,5 +23,6 @@ commands:
   verify:
   testlink:
   friends:
+  gamestate:
   #msg:
   #message:

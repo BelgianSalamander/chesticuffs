@@ -48,7 +48,7 @@ public class ChesticuffsGame {
     final List<BukkitTask> timerTasks = new LinkedList<>();
     boolean ended = false;
     private boolean pendingUsableSelection = false;
-    private int usableTemporarySlot;
+    private Integer usableTemporarySlot = null;
 
     private static class sendMessage implements Runnable{
         final Player player;
@@ -120,6 +120,11 @@ public class ChesticuffsGame {
             task.cancel();
         }
         timerTasks.clear();
+
+        if(Chesticuffs.isDebugMode){
+            return;
+        }
+
         Player player = turn == 1 ? playerOne : playerTwo;
         if(!longer) {
             timerTasks.add(Bukkit.getScheduler().runTaskLater(Chesticuffs.getPlugin(), new sendMessage(player, ChatColor.DARK_RED + "15 seconds left for this turn!"), 300));
@@ -936,6 +941,7 @@ public class ChesticuffsGame {
             case(1): //Bell
             case(2): //Stonecutter
             case(3): //Grindstone
+            case(5): //Ender Chest
                 pendingUsableSelection = true;
                 usableLore.set(1, Component.text(ChatColor.RED + "Select a played item!"));
                 break;
@@ -960,7 +966,7 @@ public class ChesticuffsGame {
                     playerOne.sendMessage(ChatColor.BLUE + "Blue used a composter! Your turn!");
                 }
                 incrementUsageCountOf(selectedItem);
-                turn = 3 - turn;
+                itemPlacementNextTurn();
                 selectedItem = null;
                 broadcastChanges();
                 break;
@@ -968,6 +974,16 @@ public class ChesticuffsGame {
 
         usableMeta.lore(usableLore);
         usable.setItemMeta(usableMeta);
+    }
+
+    private void setInfoLoreLine(ItemStack item, String line){
+        try{
+            List<Component> lore = item.getItemMeta().lore();
+            lore.set(1, Component.text(line));
+            ItemMeta itemMeta = item.getItemMeta();
+            itemMeta.lore(lore);
+            item.setItemMeta(itemMeta);
+        }catch (NullPointerException e){ }
     }
 
     private void clearLoreInfoLine(ItemStack item){
@@ -982,8 +998,40 @@ public class ChesticuffsGame {
         }
     }
 
+    private void itemPlacementNextTurn(){
+        turn = 3 - turn;
+        pendingUsableSelection = false;
+        usableTemporarySlot = null;
+        action(false);
+        selectedItem = null;
+        selectedSlot = null;
+    }
+
+    public void printGameState(){
+        Chesticuffs.LOGGER.log("########Game State########");
+        Chesticuffs.LOGGER.log("Game Identifier : " + id);
+        Chesticuffs.LOGGER.log("Player One : " + playerOne.getName());
+        Chesticuffs.LOGGER.log("Player Two : " + playerTwo.getName());
+        Chesticuffs.LOGGER.log("Round " + roundNumber + ", Phase " + phaseNumber + ", " + (turn == 1 ? "Red" : "Blue") + "'s turn");
+        Chesticuffs.LOGGER.log("Player One:");
+        try{ Chesticuffs.LOGGER.log("  Skips this phase : " + amountSkipsPlayerOne);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("  Amount placed this round : " + playerOneAmountPlacedThisRound);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("  Skipped : " + playerOneSkipped);}catch (NullPointerException e){}
+        Chesticuffs.LOGGER.log("Player Two:");
+        try{ Chesticuffs.LOGGER.log("  Skips this phase : " + amountSkipsPlayerTwo);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("  Amount placed this round : " + playerTwoAmountPlacedThisRound);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("  Skipped : " + playerTwoSkipped);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("Selected Slot : " + selectedSlot);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("Selected Item : " + selectedItem.getType().toString());}catch (NullPointerException e){}
+        Chesticuffs.LOGGER.log("Pending Usable Selection : " + pendingUsableSelection);
+        try{ Chesticuffs.LOGGER.log("Usable Temporary Data Slot : " + usableTemporarySlot);}catch (NullPointerException e){}
+    }
+
     private void usableSelectedUsableItem(int slot){
         ItemStack clickedItem = chest.getSnapshotInventory().getItem(slot);
+        Integer usableInfo = usableTemporarySlot;
+        usableTemporarySlot = null;
+        pendingUsableSelection = false;
 
         if(clickedItem == null){
             clearLoreInfoLine(selectedItem);
@@ -1006,9 +1054,11 @@ public class ChesticuffsGame {
         }
 
         int effectID = selectedItem.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER);
+        Chesticuffs.LOGGER.log("An item has been selected for a usable. Usable effect ID : " + effectID + ", item clicked : " + clickedItem.getType().toString());
 
         boolean succesfullyUsed = false;
         boolean clickedItemDied = false;
+        boolean clearSelectedItem = true;
 
         switch(effectID){
             case(1): //Bell
@@ -1019,7 +1069,7 @@ public class ChesticuffsGame {
                     succesfullyUsed = true;
                 }
                 break;
-            case(2):
+            case(2): //Stonecutter
                 short ATK = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
                 short DEF = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT);
                 short HP = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
@@ -1042,7 +1092,7 @@ public class ChesticuffsGame {
 
                 succesfullyUsed = true;
                 break;
-            case(3):
+            case(3): //Grindstone
                 Map<Enchantment, Integer> enchantments = clickedItemMeta.getEnchants();
                 int amount = enchantments.size();
                 if(amount > 0) {
@@ -1059,22 +1109,46 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
+            case(5): //Ender Chest
+                if(usableInfo == null){
+                    pendingUsableSelection = true;
+                    usableTemporarySlot = slot;
+                    setInfoLoreLine(selectedItem, ChatColor.RED + "Select a second item");
+                    clearSelectedItem = false;
+                }else{
+                    if(usableInfo != slot){
+                        ItemStack itemOne = chest.getSnapshotInventory().getItem(usableInfo).clone();
+                        chest.getSnapshotInventory().setItem(usableInfo, clickedItem);
+                        chest.getSnapshotInventory().setItem(slot, itemOne);
+                        succesfullyUsed = true;
+                        broadcast(ChatColor.GREEN + "Switched items with ender chest!");
+                    }
+                }
+                break;
+            default:
+                Chesticuffs.LOGGER.log("Reached default of usable effectID switch statement");
         }
 
         if(succesfullyUsed) {
             if(!clickedItemDied) {
+                Chesticuffs.LOGGER.log("Usable didn't make item die!");
                 clickedItem.setItemMeta(clickedItemMeta);
-                chest.getSnapshotInventory().setItem(slot, clickedItem);
                 ItemHandler.setLore(clickedItem);
+                //chest.getSnapshotInventory().setItem(slot, clickedItem);
             }else{
+                Chesticuffs.LOGGER.log("Usable made item die!");
                 chest.getSnapshotInventory().setItem(slot, null);
             }
             selectedItem.setAmount(selectedItem.getAmount() - 1);
-            pendingUsableSelection = false;
             incrementUsageCountOf(selectedItem);
         }
-        clearLoreInfoLine(selectedItem);
-        selectedItem = null;
+        if(clearSelectedItem) {
+            clearLoreInfoLine(selectedItem);
+            selectedItem = null;
+        }
+        if (succesfullyUsed) {
+            itemPlacementNextTurn();
+        }
         chest.update();
     }
 
@@ -1382,8 +1456,7 @@ public class ChesticuffsGame {
                                 action(false);
                             }
                         }else {
-                            turn = 3 - turn;
-                            action(false);
+                            itemPlacementNextTurn();
                         }
                         broadcastChanges();
                     }else if(selectedItem == null){
@@ -1393,7 +1466,7 @@ public class ChesticuffsGame {
                         broadcastChanges();
                     }else if(item.equals(validationPane)){
                         placeItem(selectedItem, e.getSlot());
-                        turn = 3 - turn;
+                        itemPlacementNextTurn();
                     }else{
                         selectedItem = null;
                         broadcastChanges();

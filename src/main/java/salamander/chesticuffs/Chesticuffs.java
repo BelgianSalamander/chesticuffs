@@ -1,5 +1,7 @@
 package salamander.chesticuffs;
 
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 import salamander.chesticuffs.playerData.DataLoader;
 import salamander.chesticuffs.commands.*;
@@ -118,6 +120,7 @@ public final class Chesticuffs extends JavaPlugin {
         getPlugin().getCommand("openinv").setExecutor(new OpenInv()); //Open's the red or blue inventory of a game from a given gameID
         getPlugin().getCommand("exitgame").setExecutor(new ExitGame()); //Remove's you from your current game
         getPlugin().getCommand("queues").setExecutor(new Queues());
+        getPlugin().getCommand("gamestate").setExecutor(new GameState());
         //getPlugin().getCommand("friends").setExecutor(new Friends()); //Used by players to manage their friends list
         //getPlugin().getCommand("msg").setExecutor(new Friends());
         //getPlugin().getCommand("message").setExecutor(new Friends());
@@ -173,6 +176,12 @@ public final class Chesticuffs extends JavaPlugin {
             DataLoader.updatePercentiles(); //Updates the lower-bound elo for every rank
             DataLoader.updateLeaderboard();
             discordManager.updateMemberRoles();
+        }
+    }
+
+    static public class LOGGER{
+        static public void log(String message){
+            Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "[DEBUG] " + message);
         }
     }
 }
