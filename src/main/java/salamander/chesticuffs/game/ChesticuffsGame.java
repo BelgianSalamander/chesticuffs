@@ -942,6 +942,7 @@ public class ChesticuffsGame {
             case(2): //Stonecutter
             case(3): //Grindstone
             case(5): //Ender Chest
+            case(6): //Flower Pot
                 pendingUsableSelection = true;
                 usableLore.set(1, Component.text(ChatColor.RED + "Select a played item!"));
                 break;
@@ -1005,6 +1006,7 @@ public class ChesticuffsGame {
         action(false);
         selectedItem = null;
         selectedSlot = null;
+        broadcastChanges();
     }
 
     public void printGameState(){
@@ -1055,7 +1057,6 @@ public class ChesticuffsGame {
 
         int effectID = selectedItem.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER);
         Chesticuffs.LOGGER.log("An item has been selected for a usable. Usable effect ID : " + effectID + ", item clicked : " + clickedItem.getType().toString());
-
         boolean succesfullyUsed = false;
         boolean clickedItemDied = false;
         boolean clearSelectedItem = true;
@@ -1122,6 +1123,29 @@ public class ChesticuffsGame {
                         chest.getSnapshotInventory().setItem(slot, itemOne);
                         succesfullyUsed = true;
                         broadcast(ChatColor.GREEN + "Switched items with ender chest!");
+                    }
+                }
+                break;
+            case(6):
+            case(7):
+                Trait trait = (effectID == 6 ? Trait.POTTABLE : Trait.STANDABLE);
+                int slotX = slot / 3;
+                Chesticuffs.LOGGER.log("Slot X : " + slotX + ", Turn : " + turn);
+                if(turn == 1 && slotX > 3) break;
+                if(turn == 2 && slotX < 5) break;
+                if(Trait.POTTABLE.isInMeta(clickedItemMeta)){
+                    HashMap<Integer, ItemStack> notReturnedItems;
+                    if(turn == 1){
+                        notReturnedItems = playerOne.getInventory().addItem(clickedItem);
+                        playerOne.updateInventory();
+                    }else{
+                        notReturnedItems = playerTwo.getInventory().addItem(clickedItem);
+                        playerTwo.updateInventory();
+                    }
+
+                    if(notReturnedItems.isEmpty()){
+                        succesfullyUsed = true;
+                        chest.getSnapshotInventory().setItem(slot, null);
                     }
                 }
                 break;

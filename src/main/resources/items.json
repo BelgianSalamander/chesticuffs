@@ -1307,9 +1307,6 @@
         "flavor" : ""
     },
     "GRASS": {
-        "similar" : [
-            "FERN"
-        ],
         "type" : "item",
         "ATK": 0,
         "DEF" : 0,
@@ -1317,6 +1314,18 @@
         "traits" : [
             "Plant",
             "Compostable"
+        ],
+        "flavor" : ""
+    },
+    "FERN" : {
+        "type" : "item",
+        "ATK": 0,
+        "DEF" : 0,
+        "HP" : 1,
+        "traits" : [
+            "Plant",
+            "Compostable",
+            "Pottable"
         ],
         "flavor" : ""
     },
@@ -1328,7 +1337,8 @@
         "HP" : 1,
         "traits" : [
             "Plant",
-            "Flammable"
+            "Flammable",
+            "Pottable"
         ],
         "flavor" : ""
     },
@@ -1368,14 +1378,16 @@
             "ORANGE_TULIP",
             "WHITE_TULIP",
             "PINK_TULIP",
-            "LILY_OF_THE_VALLEY"
+            "LILY_OF_THE_VALLEY",
+            "CORNFLOWER"
         ],
         "type" : "item",
         "ATK": 0,
         "DEF" : 0,
         "HP" : 1,
         "traits" : [
-            "Plant"
+            "Plant",
+            "Pottable"
         ],
         "flavor" : ""
     },
@@ -1387,7 +1399,8 @@
         "HP" : 1,
         "traits" : [
             "Wither",
-            "Plant"
+            "Plant",
+            "Pottable"
         ],
         "flavor" : ""
     },
@@ -1401,7 +1414,8 @@
         "HP" : 1,
         "traits" : [
             "Flammable",
-            "Compostable"
+            "Compostable",
+            "Pottable"
         ],
         "flavor" : ""
     },
@@ -1413,7 +1427,8 @@
         "HP" : 1,
         "traits" : [
             "Plant",
-            "Compostable"
+            "Compostable",
+            "Pottable"
         ],
         "flavor" : ""
     },
@@ -1438,7 +1453,8 @@
         "DEF" : 0,
         "HP" : 1,
         "traits" : [
-            "Plant"
+            "Plant",
+            "Pottable"
         ],
         "flavor" : ""
     },
@@ -1489,7 +1505,8 @@
         "HP" : 2,
         "traits" : [
             "Plant",
-            "Jumpstart"
+            "Jumpstart",
+            "Pottable"
         ],
         "flavor" : ""
     },
@@ -1545,7 +1562,8 @@
         "traits" : [
             "Plant",
             "Thorns",
-            "Compostable"
+            "Compostable",
+            "Pottable"
         ],
         "flavor" : ""
     },
@@ -2005,7 +2023,9 @@
         "ATK": 2,
         "DEF" : 1,
         "HP" : 2,
-        "traits" : [],
+        "traits" : [
+            "Standable"
+        ],
         "flavor" : ""
     },
     "WITHER_SKELETON_SKULL": {
@@ -2014,7 +2034,9 @@
         "ATK": 3,
         "DEF" : 1,
         "HP" : 2,
-        "traits" : [],
+        "traits" : [
+            "Standable"
+        ],
         "flavor" : ""
     },
     "PLAYER_HEAD": {
@@ -2023,7 +2045,9 @@
         "ATK": 2,
         "DEF" : 0,
         "HP" : 1,
-        "traits" : [],
+        "traits" : [
+            "Standable"
+        ],
         "flavor" : ""
     },
     "ZOMBIE_HEAD": {
@@ -2032,7 +2056,9 @@
         "ATK": 2,
         "DEF" : 1,
         "HP" : 1,
-        "traits" : [],
+        "traits" : [
+            "Standable"
+        ],
         "flavor" : ""
     },
     "CREEPER_HEAD": {
@@ -2041,7 +2067,9 @@
         "ATK": 3,
         "DEF" : 0,
         "HP" : 1,
-        "traits" : [],
+        "traits" : [
+            "Standable"
+        ],
         "flavor" : ""
     },
     "WHITE_BANNER": {
@@ -2352,6 +2380,20 @@
         "description" : "Swap the positions of two items",
         "useLimit" : 1,
         "effectID" : 5,
+        "flavor" : ""
+    },
+    "FLOWER_POT" : {
+        "type" : "usable",
+        "description" : "Retrieve an item that can be put in a flower pot.",
+        "useLimit" : 3,
+        "effectID" : 6,
+        "flavor" : ""
+    },
+    "ARMOR_STAND" : {
+        "type" : "usable",
+        "description" : "Retrieve an item that can be put on an armor stand.",
+        "useLimit" : 3,
+        "effectID" : 7,
         "flavor" : ""
     }
 }

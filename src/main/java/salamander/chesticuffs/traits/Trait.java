@@ -27,7 +27,9 @@ public enum Trait {
     OVERGROWTH("Overgrowth"),
     STICKY("Sticky"),
     LIGHT("Light"),
-    COMPOSTABLE("Compostable", false);
+    COMPOSTABLE("Compostable", false),
+    POTTABLE("Pottable", false),
+    STANDABLE("Standable", false);
 
     private String displayName;
     static final int amountOfValues = 1;
