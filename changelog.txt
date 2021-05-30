@@ -1,0 +1,17 @@
+Since Last Release:
+    - Added Usables! Currently added usables are:
+        - Bell
+        - Stonecutter
+        - Grindstone
+        - Composter
+        - Ender Chest
+        - Flower Pot
+        - Armor Stand
+    - New Traits:
+        - Jumpstart
+        - Flame
+        - Fire Resistant
+        - Flammable
+    - Cores:
+        - Saddle
+        - Jack O' Lantern

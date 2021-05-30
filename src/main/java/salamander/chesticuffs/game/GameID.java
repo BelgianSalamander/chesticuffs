@@ -2,7 +2,7 @@ package salamander.chesticuffs.game;
 
 public class GameID {
     /*This class generates unique ids as strings. These ids will be stored in the actual chest and will map
-    to an actual ChesticuffsGame object (Not created yet) in memory which will store the actual info about
+    to an actual ChesticuffsGame object in memory which will store the actual info about
     the game (e.g how much of each item has been placed, players playing etc...)*/
     static int counter = 0;
     static char[] chars = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};

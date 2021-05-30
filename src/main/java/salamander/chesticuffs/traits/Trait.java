@@ -13,20 +13,20 @@ public enum Trait {
     FRAGILE ("Fragile"),
     SHRAPNEL ("Shrapnel"),
     PLANT ("Plant"),
-    THORNS ("Thorns"),
+    THORNS ("Thorns"), //Unimplemented
     SOFT ("Soft"),
     IMMUNE ("Immune"),
     STUNNED ("Stunned"),
-    POISONED ("Poisoned"),
+    POISONED ("Poisoned"), //Unimplemented
     CAPBREAKER ("Capbreaker", 0),
     JUMPSTART ("Jumpstart"),
-    BREAK ("Break"),
+    BREAK ("Break"), //Unimplemented
     AQUATIC("Aquatic"),
-    WITHER("Wither"),
-    SOAK("Soak"),
-    OVERGROWTH("Overgrowth"),
-    STICKY("Sticky"),
-    LIGHT("Light"),
+    WITHER("Wither"), //Unimplemented
+    SOAK("Soak"), //Unimplemented
+    OVERGROWTH("Overgrowth"), //Unimplemented
+    STICKY("Sticky"), //Unimplemented
+    LIGHT("Light"), //Unimplemented
     COMPOSTABLE("Compostable", false),
     POTTABLE("Pottable", false),
     STANDABLE("Standable", false);

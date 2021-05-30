@@ -1870,19 +1870,6 @@
         ],
         "flavor" : ""
     },
-    "ROSE_BUSH": {
-        "similar" : [],
-        "type" : "item",
-        "ATK": 1,
-        "DEF" : 0,
-        "HP" : 2,
-        "traits" : [
-            "Plant",
-            "Thorns",
-            "Compostable"
-        ],
-        "flavor" : ""
-    },
     "TALL_GRASS": {
         "similar" : [
             "LARGE_FERN"
@@ -2347,6 +2334,40 @@
         "flavor" : "I got that bling!",
         "effectID" : 8
     },
+    "SADDLE" : {
+        "type" : "core",
+        "HP" : 20,
+        "buff" : "Priority takes two rounds to swap",
+        "debuff" : "Priority takes two rounds to swap",
+        "flavor" : "I'll ride this one out!",
+        "effectID" : 9
+    },
+    "JACK_O_LANTERN" : {
+        "type" : "core",
+        "HP" : 20,
+        "buff" : "All enemy items have -1 ATK",
+        "debuff" : "",
+        "flavor" : "Spoopy",
+        "effectID" : 10
+    },
+    "DRIED_KELP_BLOCK" : {
+        "type" : "core",
+        "HP" : 20,
+        "buff" : "Allied Aquatic items gain +1 HP",
+        "debuff" : "",
+        "flavor" : "It's Crunchy",
+        "effectID" : 11
+    },
+    "ROSE_BUSH" :{
+        "type" : "core",
+        "HP" : 13,
+        "buff" : "Every time your core is attacked, the enemies core will \ntake half damage back, rounded up.",
+        "debuff": "",
+        "flavor" : "Spiky",
+        "effectID" : 12
+    },
+
+
     "BELL" : {
         "type" : "usable",
         "description" : "Stuns an item for one until the end of next combat phase",

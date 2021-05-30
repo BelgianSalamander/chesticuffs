@@ -256,7 +256,14 @@ public class ChesticuffsGame {
     }
 
     private int getPriority(){
-        return (roundNumber + 1) % 2 + 1;
+        int swapLength = 1;
+        try{
+            if(getCore(1).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER) == 9
+            || getCore(2).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER) == 9){
+                swapLength = 2;
+            }
+        }catch (NullPointerException e){}
+        return (roundNumber - swapLength) / swapLength % 2 + 1;
     }
 
     private void broadcastChanges(){
@@ -374,6 +381,18 @@ public class ChesticuffsGame {
                     if (HP <= 0) {
                         return false;
                     }
+                    break;
+                case(11):
+                    if(traits.hasTrait(Trait.AQUATIC)) HP++;
+                    break;
+            }
+        }
+
+        ItemStack enemyCore = getCore(3 - side);
+        if(enemyCore != null){
+            switch (enemyCore.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER)){
+                case(10):
+                    if(ATK > 0) ATK--;
                     break;
             }
         }
@@ -517,11 +536,13 @@ public class ChesticuffsGame {
         ItemStack defendingCore = chest.getSnapshotInventory().getItem(22 - 6 * getPriority());
         ItemMeta defendingCoreMeta = defendingCore.getItemMeta();
         PersistentDataContainer defendingCoreData = defendingCoreMeta.getPersistentDataContainer();
+        int totalCoreDamage = 0;
         short coreHealth = defendingCoreData.get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
         for(Map.Entry<Integer, Integer> entry: attackersAndDefenders.entrySet()){
             if(entry.getValue() == null){
                 broadcast(chest.getBlockInventory().getItem(entry.getKey()).getType().toString() + " (Slot " + entry.getKey() + ") is undefended!");
                 int coreDamage = chest.getSnapshotInventory().getItem(entry.getKey()).getItemMeta().getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
+                totalCoreDamage += coreDamage;
                 broadcast(ChatColor.GRAY +  "Core takes " + attackerColor +  coreDamage + ChatColor.GRAY +  " damage!");
                 coreHealth -= coreDamage;
                 ItemHandler.setLore(chest.getBlockInventory().getItem(entry.getKey()));
@@ -571,53 +592,12 @@ public class ChesticuffsGame {
                     }
                 }
 
-                /*boolean isAttackerImmune = false;
-                boolean isAttackerFlammable = false;
-                boolean isAttackerFlame = false;
-                boolean isAttackerFireResistant = false;
-
-                boolean isDefenderImmune = false;
-                boolean isDefenderFlammable = false;
-                boolean isDefenderFlame = false;
-                boolean isDefenderFireResistant = false;*/
-
                 attackingItemMeta = attacker.getItemMeta();
                 defendingItemMeta = defender.getItemMeta();
 
                 TraitsHolder attackingItemTraits = new TraitsHolder(attackingItemMeta);
                 TraitsHolder defendingItemTraits = new TraitsHolder(defendingItemMeta);
 
-                /*String[] attackerTraits = attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",");
-                for(String trait : attackerTraits){
-                    if(trait.equalsIgnoreCase("Immunity")){
-                        isAttackerImmune = true;
-                        List<String> newTraits = Arrays.asList(attackerTraits.clone());
-                        newTraits.remove("Immunity");
-                        attackingItemMeta.getPersistentDataContainer().set(ItemHandler.getTraitsKey(), PersistentDataType.STRING, String.join(",", newTraits));
-                    }else if(trait.equalsIgnoreCase("Flammable")){
-                        isAttackerFlammable = true;
-                    }else if(trait.equalsIgnoreCase("Flame")){
-                        isAttackerFlame = true;
-                    }else if(trait.equalsIgnoreCase("Fire Resistant")){
-                        isAttackerFireResistant = true;
-                    }
-                }
-
-                String[] defenderTraits = defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.STRING).split(",");
-                for(String trait : defenderTraits){
-                    if(trait.equalsIgnoreCase("Immunity")){
-                        isDefenderImmune = true;
-                        List<String> newTraits = Arrays.asList(defenderTraits.clone());
-                        newTraits.remove("Immunity");
-                        defendingItemMeta.getPersistentDataContainer().set(ItemHandler.getTraitsKey(), PersistentDataType.STRING, String.join(",", newTraits));
-                    }else if(trait.equalsIgnoreCase("Flammable")){
-                        isDefenderFlammable = true;
-                    }else if(trait.equalsIgnoreCase("Flame")){
-                        isDefenderFlame = true;
-                    }else if(trait.equalsIgnoreCase("Fire Resistant")){
-                        isDefenderFireResistant = true;
-                    }
-                }*/
                 attackerHP = attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
                 defenderHP = defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
 
@@ -674,8 +654,13 @@ public class ChesticuffsGame {
                 }else{
                     attackingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, attackerHP);
                 }
+
                 attackingItemTraits.removeTrait(Trait.IMMUNE);
+                attackingItemTraits.removeTrait(Trait.STUNNED);
+
                 defendingItemTraits.removeTrait(Trait.IMMUNE);
+                defendingItemTraits.removeTrait(Trait.STUNNED);
+
                 attacker.setItemMeta(attackingItemMeta);
                 defender.setItemMeta(defendingItemMeta);
                 ItemHandler.setLore(attacker);
@@ -685,12 +670,28 @@ public class ChesticuffsGame {
         defendingCoreData.set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, coreHealth);
         defendingCore.setItemMeta(defendingCoreMeta);
         ItemHandler.setLore(defendingCore);
-        chest.update();
-        broadcastChanges();
         if(coreHealth <= 0){
             //De-registers Game
             endGame(getPriority());
+        }else{
+            if(defendingCoreMeta.getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER) == 12){
+                ItemStack attackingCore = getCore(getPriority());
+                ItemMeta attackingCoreMeta = attackingCore.getItemMeta();
+                short attackingCoreHealth = attackingCoreMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
+                short coreDamage = (short) Math.ceil(totalCoreDamage / 2.0f);
+                attackingCoreHealth -= coreDamage;
+                broadcast(ChatColor.RED + "Attacking core takes " + coreDamage + " from Rose Bush!");
+                if(attackingCoreHealth <= 0){
+                    endGame(3 - getPriority());
+                }else{
+                    attackingCoreMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, attackingCoreHealth);
+                    attackingCore.setItemMeta(attackingCoreMeta);
+                    ItemHandler.setLore(attackingCore);
+                }
+            }
         }
+        chest.update();
+        broadcastChanges();
     }
 
     public void handleExitEvent(Player player){
@@ -1529,6 +1530,10 @@ public class ChesticuffsGame {
                     if(e.getCurrentItem().getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("item")){
                         ItemStack itemInChest = chest.getBlockInventory().getItem(e.getSlot());
                         ItemMeta meta =  itemInChest.getItemMeta();
+                        if(Trait.STUNNED.isInMeta(meta)){
+                            (turn == 1 ? playerOne : playerTwo).sendMessage(ChatColor.RED + "That item is stunned!");
+                            break;
+                        }
                         List<Component> lore = meta.lore();
                         if(!attackersAndDefenders.containsKey(e.getSlot())){
                             if(attackersSelected >= 6) {
@@ -1597,6 +1602,10 @@ public class ChesticuffsGame {
                             selectedSlot = e.getSlot();
                             ItemStack defender =  chest.getBlockInventory().getItem(selectedSlot);
                             ItemMeta defenderMeta = defender.getItemMeta();
+                            if(Trait.STUNNED.isInMeta(defenderMeta)){
+                                (turn == 1 ? playerOne : playerTwo).sendMessage(ChatColor.RED + "That item is stunned!");
+                                break;
+                            }
                             List<Component> lore = defenderMeta.lore();
                             lore.set(1,Component.text(ChatColor.BLUE + "Defending"));
                             defenderMeta.lore(lore);
