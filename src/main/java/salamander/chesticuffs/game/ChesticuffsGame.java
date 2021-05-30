@@ -938,16 +938,21 @@ public class ChesticuffsGame {
         List<Component> usableLore = usableMeta.lore();
         int effectID = usableMeta.getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER);
 
-        switch(effectID){
-            case(1): //Bell
-            case(2): //Stonecutter
-            case(3): //Grindstone
-            case(5): //Ender Chest
-            case(6): //Flower Pot
+        switch(selectedItem.getType()){
+            case BELL: //Bell
+            case STONECUTTER: //Stonecutter
+            case GRINDSTONE: //Grindstone
+            case ENDER_CHEST: //Ender Chest
+            case FLOWER_POT: //Flower Pot
+            case ARMOR_STAND:
                 pendingUsableSelection = true;
                 usableLore.set(1, Component.text(ChatColor.RED + "Select a played item!"));
                 break;
-            case(4):
+            case SPONGE:
+            case WET_SPONGE:
+                pendingUsableSelection = true;
+                usableLore.set(1, Component.text(ChatColor.RED + "Select a played aquatic item!"));
+            case COMPOSTER:
                 for(int x = 10 - turn * 5; x < 14 - turn * 5; x++){
                     for(int y  = 0; y < 3; y++){
                         try {
@@ -972,6 +977,7 @@ public class ChesticuffsGame {
                 selectedItem = null;
                 broadcastChanges();
                 break;
+
         }
 
         usableMeta.lore(usableLore);
@@ -1056,22 +1062,28 @@ public class ChesticuffsGame {
             return;
         }
 
-        int effectID = selectedItem.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER);
-        Chesticuffs.LOGGER.log("An item has been selected for a usable. Usable effect ID : " + effectID + ", item clicked : " + clickedItem.getType().toString());
+        //int effectID = selectedItem.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER);
+
+        Chesticuffs.LOGGER.log("An item has been selected for a usable. " +
+                               "Usable item clicked : " +
+                                clickedItem.getType().toString());
         boolean succesfullyUsed = false;
         boolean clickedItemDied = false;
         boolean clearSelectedItem = true;
+        TraitsHolder traits = new TraitsHolder(clickedItemMeta);
 
-        switch(effectID){
-            case(1): //Bell
-                System.out.println("Bell used!");
-                TraitsHolder traits = new TraitsHolder(clickedItemMeta);
-                if(traits.addTrait(Trait.STUNNED)){
+        switch(selectedItem.getType()){
+            case BELL: //Bell
+                broadcast(ChatColor.GREEN + "Bell has been used!");
+
+
+                if(traits.addTrait(Trait.STUNNED))
+                {
                     traits.setTraitsOf(clickedItemMeta);
                     succesfullyUsed = true;
                 }
                 break;
-            case(2): //Stonecutter
+            case STONECUTTER: //Stonecutter
                 short ATK = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
                 short DEF = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT);
                 short HP = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
@@ -1094,7 +1106,8 @@ public class ChesticuffsGame {
 
                 succesfullyUsed = true;
                 break;
-            case(3): //Grindstone
+            case GRINDSTONE: //Grindstone
+                broadcast("Grindstone has been used!");
                 Map<Enchantment, Integer> enchantments = clickedItemMeta.getEnchants();
                 int amount = enchantments.size();
                 if(amount > 0) {
@@ -1111,7 +1124,8 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
-            case(5): //Ender Chest
+            case ENDER_CHEST: //Ender Chest
+                broadcast(ChatColor.GREEN + "Ender chest has been used!");
                 if(usableInfo == null){
                     pendingUsableSelection = true;
                     usableTemporarySlot = slot;
@@ -1127,13 +1141,24 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
-            case(6):
-            case(7):
-                Trait trait = (effectID == 6 ? Trait.POTTABLE : Trait.STANDABLE);
+            case FLOWER_POT://Flower Pot
+            case ARMOR_STAND://Armour Stand
+
+                String broadcast = selectedItem.getType() == Material.FLOWER_POT ?
+                "Flower pot has been used!" :
+                "Armor stand has been used!";
+                broadcast(ChatColor.GREEN + broadcast);
+
+                Trait trait = (selectedItem.getType() == Material.FLOWER_POT ? Trait.POTTABLE : Trait.STANDABLE);
                 int slotX = slot / 3;
                 Chesticuffs.LOGGER.log("Slot X : " + slotX + ", Turn : " + turn);
                 if(turn == 1 && slotX > 3) break;
                 if(turn == 2 && slotX < 5) break;
+
+                //TODO is a || Trait.STANDABLE.isInMeta(clickedItemMeta) needed
+                // in this if statement?  Seems like the armor stand is not yet added but not
+                // entirely sure what the HashMap is for in future so leaving for now.
+
                 if(Trait.POTTABLE.isInMeta(clickedItemMeta)){
                     HashMap<Integer, ItemStack> notReturnedItems;
                     if(turn == 1){
@@ -1150,8 +1175,42 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
+            case SPONGE://Sponge
+                broadcast(ChatColor.GREEN + "Sponge has been used!");
+
+                if(Trait.AQUATIC.isInMeta(clickedItemMeta))
+                {
+                    if(!Trait.DRIED.isInMeta(clickedItemMeta))
+                    {
+                        if(traits.addTrait(Trait.DRIED))
+                        {
+                            traits.setTraitsOf(clickedItemMeta);
+                            succesfullyUsed = true;
+                        }
+                    }
+                    else
+                    {
+                        //cannot use sponge already dried
+                    }
+                }
+                else
+                {
+                    //item not aquatic
+                }
+                break;
+            case WET_SPONGE://Wet Sponge
+                broadcast(ChatColor.GREEN + "Wet sponge has been used!");
+                if(Trait.AQUATIC.isInMeta(clickedItemMeta) && Trait.DRIED.isInMeta(clickedItemMeta))
+                {
+                    if(traits.removeTrait(Trait.DRIED))
+                    {
+                        traits.setTraitsOf(clickedItemMeta);
+                        succesfullyUsed = true;
+                    }
+                }//TODO checks to cancel if alraeady dried or not aquatic
+                break;
             default:
-                Chesticuffs.LOGGER.log("Reached default of usable effectID switch statement");
+                Chesticuffs.LOGGER.log("Reached default of usables switch statement");
         }
 
         if(succesfullyUsed) {
@@ -1265,7 +1324,7 @@ public class ChesticuffsGame {
         }
 
         switch(phaseNumber){
-            case(0):
+            case(0)://Placing of cores
                 if(e.getClickedInventory().equals(player.getInventory())){
                     ItemStack item = e.getCurrentItem();
                     if(item == null || item.getType() == Material.AIR){
@@ -1343,8 +1402,8 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
-            case(1):
-            case(4):
+            case(1)://opening phase
+            case(4)://closing phase
                 if(e.getClickedInventory().equals(player.getInventory())){
                     broadcastChanges(); //Clears all virtual green glass panes if there are any (Because the panes aren't in the actual chest)
                     selectedItem = null;
@@ -1498,7 +1557,7 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
-            case(2):
+            case(2)://attacking phase
                 //Check if they clicked on their side
                 if(e.getClickedInventory().equals(currentInv)){
                     if(e.getSlot() % 9 == 4){
@@ -1534,6 +1593,10 @@ public class ChesticuffsGame {
                             (turn == 1 ? playerOne : playerTwo).sendMessage(ChatColor.RED + "That item is stunned!");
                             break;
                         }
+                        else if(Trait.DRIED.isInMeta(meta)){
+                            (turn == 1 ? playerOne : playerTwo).sendMessage(ChatColor.RED + "That item is dried!");
+                            break;
+                        }
                         List<Component> lore = meta.lore();
                         if(!attackersAndDefenders.containsKey(e.getSlot())){
                             if(attackersSelected >= 6) {
@@ -1555,7 +1618,7 @@ public class ChesticuffsGame {
                 }
 
                 break;
-            case(3):
+            case(3): //defense phase
                 if(e.getCurrentItem() == null) {
                     selectedSlot = null;
                     return;
@@ -1604,6 +1667,10 @@ public class ChesticuffsGame {
                             ItemMeta defenderMeta = defender.getItemMeta();
                             if(Trait.STUNNED.isInMeta(defenderMeta)){
                                 (turn == 1 ? playerOne : playerTwo).sendMessage(ChatColor.RED + "That item is stunned!");
+                                break;
+                            }
+                            if(Trait.DRIED.isInMeta(defenderMeta)){
+                                (turn == 1 ? playerOne : playerTwo).sendMessage(ChatColor.RED + "That item is dried!");
                                 break;
                             }
                             List<Component> lore = defenderMeta.lore();

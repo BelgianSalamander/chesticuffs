@@ -122,6 +122,7 @@ public class Friends implements CommandExecutor
     public static void messagePlayer(Player p, Player recipient, String msg)
     {
         p.sendMessage(p.getName() + " -> " + msg);
+
         recipient.sendMessage(p.getName() + " -> " + msg);
     }
 

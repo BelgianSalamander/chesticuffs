@@ -53,7 +53,7 @@ public class TraitsHolder {
             if(level == 0){
                 index += 1;
             }
-            Trait traitObject =Trait.valueOf(trait.toUpperCase().substring(0, index).replace(" ", "_"));
+            Trait traitObject = Trait.valueOf(trait.toUpperCase().substring(0, index).replace(" ", "_"));
             int traitIndex = traitObject.toInt();
             traits[traitIndex] = true;
             if(traitObject.getValueIndex() != -1) {

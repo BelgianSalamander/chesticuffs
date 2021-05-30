@@ -2401,20 +2401,35 @@
         "description" : "Swap the positions of two items",
         "useLimit" : 1,
         "effectID" : 5,
-        "flavor" : ""
+        "flavor" : "WOOOOOSH!"
     },
     "FLOWER_POT" : {
         "type" : "usable",
         "description" : "Retrieve an item that can be put in a flower pot.",
         "useLimit" : 3,
         "effectID" : 6,
-        "flavor" : ""
+        "flavor" : "Flora, not fauna!"
     },
     "ARMOR_STAND" : {
         "type" : "usable",
         "description" : "Retrieve an item that can be put on an armor stand.",
         "useLimit" : 3,
         "effectID" : 7,
-        "flavor" : ""
+        "flavor" : "Standing by itself!"
+    },
+    "SPONGE" : {
+        "type" : "usable",
+        "description" : "Use on an aquatic item to dry it out.",
+        "useLimit" : 3,
+        "effectID" : 8,
+        "flavor" : "Dry to the bone!"
+    },
+    "WET_SPONGE" : {
+        "type" : "usable",
+        "description" : "Use on a dried aquatic item to rejuvinate it.",
+        "useLimit" : 3,
+        "effectID" : 9,
+        "flavor" : "Soaking wet!"
     }
+
 }

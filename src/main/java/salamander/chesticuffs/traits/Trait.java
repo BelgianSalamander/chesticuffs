@@ -29,7 +29,8 @@ public enum Trait {
     LIGHT("Light"), //Unimplemented
     COMPOSTABLE("Compostable", false),
     POTTABLE("Pottable", false),
-    STANDABLE("Standable", false);
+    STANDABLE("Standable", false),
+    DRIED("Dried");
 
     private String displayName;
     static final int amountOfValues = 1;
