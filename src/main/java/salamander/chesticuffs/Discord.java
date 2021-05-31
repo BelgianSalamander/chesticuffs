@@ -286,6 +286,8 @@ public class Discord extends ListenerAdapter implements CommandExecutor, Listene
                 embedBuilder = embedBuilder.addField("Flavor", "\"" + flavor + "\"", false);
             }else if(type.equals("usable")){
                 String description = (String) itemStats.get("description");
+                String flavor = (String) itemStats.get("flavor");
+
                 embedBuilder = embedBuilder.addField("Description", description, false).setColor(Color.GREEN);
                 embedBuilder = embedBuilder.addField("Flavor", "\"" + flavor + "\"", false);
             }
