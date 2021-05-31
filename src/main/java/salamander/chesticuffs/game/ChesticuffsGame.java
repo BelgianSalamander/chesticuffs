@@ -952,6 +952,7 @@ public class ChesticuffsGame {
             case WET_SPONGE:
                 pendingUsableSelection = true;
                 usableLore.set(1, Component.text(ChatColor.RED + "Select a played aquatic item!"));
+                break;
             case COMPOSTER:
                 for(int x = 10 - turn * 5; x < 14 - turn * 5; x++){
                     for(int y  = 0; y < 3; y++){
