@@ -10,6 +10,7 @@ public enum Trait {
     FLAMMABLE ("Flammable"),
     FLAME ("Flame"),
     FIRE_RESISTANT ("Fire Resistant"),
+    AQUA_RESISTANT ("Aqua Resistant"),
     FRAGILE ("Fragile"),
     SHRAPNEL ("Shrapnel"),
     PLANT ("Plant"),
@@ -30,7 +31,9 @@ public enum Trait {
     COMPOSTABLE("Compostable", false),
     POTTABLE("Pottable", false),
     STANDABLE("Standable", false),
-    DRIED("Dried");
+    DRIED("Dried"),
+    FACADE("Facade"),
+    DYED("Dyed");
 
     private String displayName;
     static final int amountOfValues = 1;

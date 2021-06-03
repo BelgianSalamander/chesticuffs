@@ -2368,6 +2368,7 @@
     },
 
 
+
     "BELL" : {
         "type" : "usable",
         "description" : "Stuns an item for one until the end of next combat phase",
@@ -2430,6 +2431,189 @@
         "useLimit" : 3,
         "effectID" : 9,
         "flavor" : "Soaking wet!"
+    },
+    "PAINTING" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a \"facade\"; a shield that blocks all damage for one turn and avoids overkill",
+        "useLimit" : 1,
+        "effectID" : 10,
+        "flavor" : ""
+    },
+    "LEATHER_HELMET" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +1 DEF",
+        "useLimit" : 3,
+        "effectID" : 11,
+        "flavor" : ""
+    },
+    "LEATHER_CHESTPLATE" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +3 DEF",
+        "useLimit" : 3,
+        "effectID" : 12,
+        "flavor" : ""
+    },
+    "LEATHER_LEGGINGS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +2 DEF",
+        "useLimit" : 3,
+        "effectID" : 13,
+        "flavor" : ""
+    },
+    "LEATHER_BOOTS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +1 DEF",
+        "useLimit" : 3,
+        "effectID" : 14,
+        "flavor" : ""
+    },
+    "CHAINMAIL_HELMET" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +2 DEF",
+        "useLimit" : 3,
+        "effectID" : 15,
+        "flavor" : ""
+    },
+    "CHAINMAIL_CHESTPLATE" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +5 DEF",
+        "useLimit" : 3,
+        "effectID" : 16,
+        "flavor" : ""
+    },
+    "CHAINMAIL_LEGGINGS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +4 DEF",
+        "useLimit" : 3,
+        "effectID" : 17,
+        "flavor" : ""
+    },
+    "CHAINMAIL_BOOTS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +1 DEF",
+        "useLimit" : 3,
+        "effectID" : 18,
+        "flavor" : ""
+    },
+    "IRON_HELMET" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +2 DEF",
+        "useLimit" : 3,
+        "effectID" : 19,
+        "flavor" : ""
+    },
+    "IRON_CHESTPLATE" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +6 DEF",
+        "useLimit" : 3,
+        "effectID" : 20,
+        "flavor" : ""
+    },
+    "IRON_LEGGINGS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +5 DEF",
+        "useLimit" : 3,
+        "effectID" : 21,
+        "flavor" : ""
+    },
+    "IRON_BOOTS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +2 DEF",
+        "useLimit" : 3,
+        "effectID" : 22,
+        "flavor" : ""
+    },
+    "GOLDEN_HELMET" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +2 DEF",
+        "useLimit" : 3,
+        "effectID" : 22,
+        "flavor" : ""
+    },
+    "GOLDEN_CHESTPLATE" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +5 DEF",
+        "useLimit" : 3,
+        "effectID" : 23,
+        "flavor" : ""
+    },
+    "GOLDEN_LEGGINGS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +3 DEF",
+        "useLimit" : 3,
+        "effectID" : 23,
+        "flavor" : ""
+    },
+    "GOLDEN_BOOTS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +1 DEF",
+        "useLimit" : 3,
+        "effectID" : 24,
+        "flavor" : ""
+    },
+    "DIAMOND_HELMET" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +3 DEF",
+        "useLimit" : 3,
+        "effectID" : 25,
+        "flavor" : ""
+    },
+    "DIAMOND_CHESTPLATE" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +8 DEF",
+        "useLimit" : 3,
+        "effectID" : 26,
+        "flavor" : ""
+    },
+    "DIAMOND_LEGGINGS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +6 DEF",
+        "useLimit" : 3,
+        "effectID" : 27,
+        "flavor" : ""
+    },
+    "DIAMOND_BOOTS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +3 DEF",
+        "useLimit" : 3,
+        "effectID" : 28,
+        "flavor" : ""
+    },
+    "NETHERITE_HELMET" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +3 DEF and Fire Resistance",
+        "useLimit" : 3,
+        "effectID" : 29,
+        "flavor" : ""
+    },
+    "NETHERITE_CHESTPLATE" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +8 DEF and Fire Resistance",
+        "useLimit" : 3,
+        "effectID" : 30,
+        "flavor" : ""
+    },
+    "NETHERITE_LEGGINGS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +6 DEF and Fire Resistance",
+        "useLimit" : 3,
+        "effectID" : 31,
+        "flavor" : ""
+    },
+    "NETHERITE_BOOTS" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +3 DEF and Fire Resistance",
+        "useLimit" : 3,
+        "effectID" : 32,
+        "flavor" : ""
+    },
+    "TURTLE_HELMET" : {
+        "type" : "usable",
+        "description" : "Gives a selected item a +2 DEF and resistance to aquatic attacks",
+        "useLimit" : 3,
+        "effectID" : 33,
+        "flavor" : ""
     }
+
 
 }

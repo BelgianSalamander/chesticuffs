@@ -1,6 +1,7 @@
 package salamander.chesticuffs.game;
 
 import net.kyori.adventure.text.Component;
+import net.md_5.bungee.chat.SelectorComponentSerializer;
 import org.apache.commons.lang.ObjectUtils;
 import org.bukkit.*;
 import org.bukkit.block.Chest;
@@ -604,6 +605,20 @@ public class ChesticuffsGame {
                 int attackerDamage = Math.max((properAttackerDamage - defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT)), 0);
                 int defenderDamage = Math.max((properDefenderDamage - attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT)), 0);
 
+
+                //TODO how tf would facade best be implemented
+                // this is the best i can come up with ahhhhhhhhhhhhhhhhhhhhhh
+                if(attackingItemTraits.hasTrait(Trait.FACADE))
+                {
+                    defenderDamage = 0;
+                    broadcast("Due to facade being in play, attacker will deal 0 damage!");
+                }
+                if(defendingItemTraits.hasTrait(Trait.FACADE))
+                {
+                    attackerDamage = 0;
+                    broadcast("Due to facade being in play, attacker will deal 0 damage!");
+                }
+
                 if(attackingItemTraits.hasTrait(Trait.FLAME)){
                     if(defendingItemTraits.hasTrait(Trait.FIRE_RESISTANT)){
                         attackerDamage = 0;
@@ -617,6 +632,17 @@ public class ChesticuffsGame {
                         defenderDamage = 0;
                     }else if(defendingItemTraits.hasTrait(Trait.FLAMMABLE)){
                         defenderDamage *= 2;
+                    }
+                }
+
+                if(attackingItemTraits.hasTrait(Trait.AQUATIC)){
+                    if(defendingItemTraits.hasTrait(Trait.AQUA_RESISTANT)){
+                        attackerDamage = 0;
+                    }
+                }
+                if(defendingItemTraits.hasTrait(Trait.AQUATIC)){
+                    if(attackingItemTraits.hasTrait(Trait.AQUA_RESISTANT)){
+                        defenderDamage = 0;
                     }
                 }
 
@@ -657,9 +683,11 @@ public class ChesticuffsGame {
 
                 attackingItemTraits.removeTrait(Trait.IMMUNE);
                 attackingItemTraits.removeTrait(Trait.STUNNED);
+                attackingItemTraits.removeTrait(Trait.FACADE);
 
                 defendingItemTraits.removeTrait(Trait.IMMUNE);
                 defendingItemTraits.removeTrait(Trait.STUNNED);
+                defendingItemTraits.removeTrait(Trait.FACADE);
 
                 attacker.setItemMeta(attackingItemMeta);
                 defender.setItemMeta(defendingItemMeta);
@@ -953,6 +981,10 @@ public class ChesticuffsGame {
                 pendingUsableSelection = true;
                 usableLore.set(1, Component.text(ChatColor.RED + "Select a played aquatic item!"));
                 break;
+            case PAINTING:
+                pendingUsableSelection = true;
+                usableLore.set(1, Component.text(ChatColor.RED + "Select an item to become a facade!"));
+                break;
             case COMPOSTER:
                 for(int x = 10 - turn * 5; x < 14 - turn * 5; x++){
                     for(int y  = 0; y < 3; y++){
@@ -1073,24 +1105,22 @@ public class ChesticuffsGame {
         boolean clearSelectedItem = true;
         TraitsHolder traits = new TraitsHolder(clickedItemMeta);
 
+        //ItemStack oldItem = selectedItem;
+
+        short ATK = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
+        short DEF = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT);
+        short HP = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
+
         switch(selectedItem.getType()){
             case BELL: //Bell
-                broadcast(ChatColor.GREEN + "Bell has been used!");
-
-
                 if(traits.addTrait(Trait.STUNNED))
                 {
                     traits.setTraitsOf(clickedItemMeta);
                     succesfullyUsed = true;
+                    broadcast(ChatColor.GREEN + "Bell has been used!");
                 }
                 break;
             case STONECUTTER: //Stonecutter
-                short ATK = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
-                short DEF = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT);
-                short HP = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
-
-                broadcast(ChatColor.GREEN + "Stonecutter has been used!");
-
                 ATK++;
                 DEF--;
                 HP--;
@@ -1106,9 +1136,9 @@ public class ChesticuffsGame {
                 }
 
                 succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Stonecutter has been used!");
                 break;
             case GRINDSTONE: //Grindstone
-                broadcast("Grindstone has been used!");
                 Map<Enchantment, Integer> enchantments = clickedItemMeta.getEnchants();
                 int amount = enchantments.size();
                 if(amount > 0) {
@@ -1118,6 +1148,7 @@ public class ChesticuffsGame {
                         if(i == index){
                             clickedItemMeta.removeEnchant(enchant);
                             succesfullyUsed = true;
+                            broadcast("Grindstone has been used!");
                             break;
                         }
 
@@ -1126,7 +1157,6 @@ public class ChesticuffsGame {
                 }
                 break;
             case ENDER_CHEST: //Ender Chest
-                broadcast(ChatColor.GREEN + "Ender chest has been used!");
                 if(usableInfo == null){
                     pendingUsableSelection = true;
                     usableTemporarySlot = slot;
@@ -1138,6 +1168,7 @@ public class ChesticuffsGame {
                         chest.getSnapshotInventory().setItem(usableInfo, clickedItem);
                         chest.getSnapshotInventory().setItem(slot, itemOne);
                         succesfullyUsed = true;
+                        broadcast(ChatColor.GREEN + "Ender chest has been used!");
                         broadcast(ChatColor.GREEN + "Switched items with ender chest!");
                     }
                 }
@@ -1177,8 +1208,6 @@ public class ChesticuffsGame {
                 }
                 break;
             case SPONGE://Sponge
-                broadcast(ChatColor.GREEN + "Sponge has been used!");
-
                 if(Trait.AQUATIC.isInMeta(clickedItemMeta))
                 {
                     if(!Trait.DRIED.isInMeta(clickedItemMeta))
@@ -1187,28 +1216,258 @@ public class ChesticuffsGame {
                         {
                             traits.setTraitsOf(clickedItemMeta);
                             succesfullyUsed = true;
+                            broadcast(ChatColor.GREEN + "Sponge has been used!");
                         }
                     }
                     else
                     {
+                        setInfoLoreLine(selectedItem, ChatColor.RED + "Item already dried");
                         //cannot use sponge already dried
                     }
                 }
                 else
                 {
+                    setInfoLoreLine(selectedItem, ChatColor.RED + "Item must be aquatic");
                     //item not aquatic
                 }
                 break;
             case WET_SPONGE://Wet Sponge
-                broadcast(ChatColor.GREEN + "Wet sponge has been used!");
-                if(Trait.AQUATIC.isInMeta(clickedItemMeta) && Trait.DRIED.isInMeta(clickedItemMeta))
+                if(Trait.AQUATIC.isInMeta(clickedItemMeta))
                 {
-                    if(traits.removeTrait(Trait.DRIED))
+                    if( Trait.DRIED.isInMeta(clickedItemMeta))
+                    {
+                        if(traits.removeTrait(Trait.DRIED))
+                        {
+                            traits.setTraitsOf(clickedItemMeta);
+                            succesfullyUsed = true;
+                            broadcast(ChatColor.GREEN + "Wet sponge has been used!");
+                        }
+                    }
+                    else
+                    {
+                        setInfoLoreLine(selectedItem, ChatColor.RED + "Item already dried");
+                    }
+
+                }
+                else
+                {
+                    setInfoLoreLine(selectedItem, ChatColor.RED + "Item must be aquatic");
+                }
+                break;
+            case PAINTING:
+                if(!Trait.FACADE.isInMeta(clickedItemMeta))//doesn't have a facade
+                {
+                    //turn the selected item into the facade.
+                    //Not replacing the item with the facade may be too overpowered???
+                    // At end of turn, turn it back
+                    // does it work for cores?
+                    if(traits.addTrait(Trait.FACADE))
                     {
                         traits.setTraitsOf(clickedItemMeta);
+                        setInfoLoreLine(clickedItem, ChatColor.RED + "Facade: Defends against all attacks for 1 turn");
                         succesfullyUsed = true;
+                        broadcast(ChatColor.GREEN + "Painting has been used!");
                     }
-                }//TODO checks to cancel if alraeady dried or not aquatic
+                }
+                else
+                {
+                    //probably not needed due to only allowing 1 facade per player per game
+                    setInfoLoreLine(selectedItem, ChatColor.RED + "Item already facade");
+                }
+                break;
+            case LEATHER_HELMET:
+                DEF++;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Leather helmet has been used!");
+                break;
+            case LEATHER_CHESTPLATE:
+                DEF+=3;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Leather chestplate has been used!");
+                break;
+            case LEATHER_LEGGINGS:
+                DEF+=2;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Leather leggings have been used!");
+                break;
+            case LEATHER_BOOTS:
+                DEF++;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Leather boots have been used!");
+                break;
+            case CHAINMAIL_HELMET:
+                DEF+=2;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Chainmail helmet has been used!");
+                break;
+            case CHAINMAIL_CHESTPLATE:
+                DEF+=5;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Chainmail chestplate has been used!");
+                break;
+            case CHAINMAIL_LEGGINGS:
+                DEF+=4;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Chainmail leggings have been used!");
+                break;
+            case CHAINMAIL_BOOTS:
+                DEF+=1;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Chainmail boots have been used!");
+                break;
+            case IRON_HELMET:
+                DEF+=2;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Iron helmet has been used!");
+                break;
+            case IRON_CHESTPLATE:
+                DEF+=6;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Iron chestplate has been used!");
+                break;
+            case IRON_LEGGINGS:
+                DEF+=5;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Iron leggings have been used!");
+                break;
+            case IRON_BOOTS:
+                DEF+=2;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Iron boots have been used!");
+                break;
+            case GOLDEN_HELMET:
+                DEF+=2;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Golden helmet has been used!");
+                break;
+            case GOLDEN_CHESTPLATE:
+                DEF+=5;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Golden chestplate has been used!");
+                break;
+            case GOLDEN_LEGGINGS:
+                DEF+=3;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Golden leggings have been used!");
+                break;
+            case GOLDEN_BOOTS:
+                DEF+=1;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Golden boots have been used!");
+                break;
+            case DIAMOND_HELMET:
+                DEF+=3;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Diamond helmet has been used!");
+                break;
+            case DIAMOND_CHESTPLATE:
+                DEF+=8;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Diamond chestplate has been used!");
+                break;
+            case DIAMOND_LEGGINGS:
+                DEF+=6;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Diamond leggings have been used!");
+                break;
+            case DIAMOND_BOOTS:
+                DEF+=3;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Diamond boots have been used!");
+                break;
+            case NETHERITE_HELMET:
+                DEF+=3;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+
+                if(traits.addTrait(Trait.FIRE_RESISTANT))traits.setTraitsOf(clickedItemMeta);
+
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Netherite helmet has been used!");
+                break;
+            case NETHERITE_CHESTPLATE:
+                DEF+=8;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+
+                if(traits.addTrait(Trait.FIRE_RESISTANT))traits.setTraitsOf(clickedItemMeta);
+
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Netherite chestplate has been used!");
+                break;
+            case NETHERITE_LEGGINGS:
+                DEF+=6;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+
+                if(traits.addTrait(Trait.FIRE_RESISTANT))traits.setTraitsOf(clickedItemMeta);
+
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Netherite leggings have been used!");
+                break;
+            case NETHERITE_BOOTS:
+                DEF+=3;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+
+                if(traits.addTrait(Trait.FIRE_RESISTANT))traits.setTraitsOf(clickedItemMeta);
+
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Netherite boots have been used!");
+                break;
+            case TURTLE_HELMET:
+                DEF+=2;
+                clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
+
+                if(traits.addTrait(Trait.AQUA_RESISTANT))traits.setTraitsOf(clickedItemMeta);
+
+                succesfullyUsed = true;
+                broadcast(ChatColor.GREEN + "Turtle helmet has been used!");
+                break;
+            //TODO clean up armour cases, might reduce readbility but
+            // will reduce size of file to make scrolling easier
+            case CHAIN://needs implementing
+                break;
+            //TODO finish white dye
+            // needs to return stats to prior to dying the item
+            // not necessarily default as item could have modified stats from another item
+            // just needs to remove another dye's effect.
+            case WHITE_DYE:
+                if(Trait.DYED.isInMeta(clickedItemMeta))
+                {
+                    if(traits.removeTrait(Trait.DYED))
+                    {
+                        traits.setTraitsOf(clickedItemMeta);
+
+                        /*int a = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
+                        int d = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT);
+                        int h = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
+                        */
+
+                        succesfullyUsed = true;
+                        broadcast(ChatColor.GREEN + "White dye has been used!");
+                    }
+                }
+                else
+                {
+                    setInfoLoreLine(selectedItem, ChatColor.RED + "Item not dyed");
+                }
                 break;
             default:
                 Chesticuffs.LOGGER.log("Reached default of usables switch statement");
@@ -1559,6 +1818,7 @@ public class ChesticuffsGame {
                 }
                 break;
             case(2)://attacking phase
+
                 //Check if they clicked on their side
                 if(e.getClickedInventory().equals(currentInv)){
                     if(e.getSlot() % 9 == 4){
@@ -1620,6 +1880,7 @@ public class ChesticuffsGame {
 
                 break;
             case(3): //defense phase
+
                 if(e.getCurrentItem() == null) {
                     selectedSlot = null;
                     return;
