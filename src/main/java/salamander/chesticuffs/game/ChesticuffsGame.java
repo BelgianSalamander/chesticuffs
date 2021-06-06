@@ -671,11 +671,19 @@ public class ChesticuffsGame {
                 }
 
                 if(defenderHP <= 0){
+                    if(defendingItemTraits.hasTrait(Trait.BREAK))
+                    {
+
+                    }
                     chest.getSnapshotInventory().setItem(entry.getValue(), null);
                 }else{
                     defendingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, defenderHP);
                 }
                 if(attackerHP <= 0){
+                    if(attackingItemTraits.hasTrait(Trait.BREAK))
+                    {
+
+                    }
                     chest.getSnapshotInventory().setItem(entry.getKey(), null);
                 }else{
                     attackingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, attackerHP);
