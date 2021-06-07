@@ -144,7 +144,10 @@ public class GameStarter {
         playerTwo.setHealth(20);
         playerOne.setFoodLevel(20);
         playerTwo.setFoodLevel(20);
-        Location playerOneLocation = WorldHandler.generate();
+        Location playerOneLocation = WorldHandler.generateGameStartingPosition();
+        int chunkX = playerOneLocation.getBlockX() / 16;
+        int chunkZ = playerOneLocation.getBlockZ() / 16;
+        WorldHandler.createStrongholdAroundPosition(chunkX, chunkZ, 30,60);
         Location playerTwoLocation = playerOneLocation.clone();
         playerTwoLocation.setWorld(Bukkit.getWorld("world_two"));
         playerOne.setBedSpawnLocation(playerOneLocation, true);

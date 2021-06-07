@@ -9,6 +9,7 @@ import salamander.chesticuffs.events.*;
 import salamander.chesticuffs.game.ChesticuffsGame;
 import salamander.chesticuffs.inventory.ChestKeys;
 import salamander.chesticuffs.inventory.ItemHandler;
+import salamander.chesticuffs.prototype.AddStrongholdCommand;
 import salamander.chesticuffs.queue.QueueHandler;
 import salamander.chesticuffs.queue.QueueScanner;
 import salamander.chesticuffs.toolbar.ToolbarItems;
@@ -22,6 +23,7 @@ public final class Chesticuffs extends JavaPlugin {
     private static File itemsFile, chestsFile, playerFile, queuesFile, tokenFile, discordLinksFile;
     static private boolean queueActive = true;
     static public boolean isDebugMode = false;
+    static public boolean log = false;
     static public Discord discordManager;
     public static int K = 40;
 
@@ -99,10 +101,10 @@ public final class Chesticuffs extends JavaPlugin {
         ItemHandler.init(); //ItemHandler loads items from items.json
         ChestManager.init(); //Loads chests
         ChestKeys.init(); //Create NamespacedKeys for chest Persistent Data Container
-        //WorldHandler.init(); //Create worlds TODO Uncomment before release!
+        WorldHandler.init(); //Create worlds TODO Uncomment before release!
         DataLoader.loadData(); //Loads PlayerData
         ToolbarItems.init(); //Initialises items for a toolbar item menu (currently not in use)
-        QueueHandler.init();
+        //QueueHandler.init();
 
         getPlugin().getCommand("selectchest").setExecutor(new SelectChest()); //Adds the chest you are looking at to the registered chests list
         getPlugin().getCommand("clearchests").setExecutor(new ClearChests()); //Clears the registered chests list
@@ -121,6 +123,9 @@ public final class Chesticuffs extends JavaPlugin {
         getPlugin().getCommand("exitgame").setExecutor(new ExitGame()); //Remove's you from your current game
         getPlugin().getCommand("queues").setExecutor(new Queues());
         getPlugin().getCommand("gamestate").setExecutor(new GameState());
+        getPlugin().getCommand("reloaditems").setExecutor(new ReloadItems());
+        getPlugin().getCommand("togglelogging").setExecutor(new ToggleLogging());
+        getPlugin().getCommand("addstronghold").setExecutor(new AddStrongholdCommand()); //TODO This must not be present when releasing
         //getPlugin().getCommand("friends").setExecutor(new Friends()); //Used by players to manage their friends list
         //getPlugin().getCommand("msg").setExecutor(new Friends());
         //getPlugin().getCommand("message").setExecutor(new Friends());
@@ -139,9 +144,9 @@ public final class Chesticuffs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerSleep(), this);
         getServer().getPluginManager().registerEvents(new PortalEvent(), this);
 
-        getServer().getScheduler().runTaskTimer(this, new QueueScanner(), 200, 20); //Schedules queue scanner to run every second
+        //getServer().getScheduler().runTaskTimer(this, new QueueScanner(), 200, 20); //Schedules queue scanner to run every second
         //getServer().getScheduler().runTaskTimer(this, new updateDataAndStuff(), 1200, 1200); //Updates percentiles and leaderboard every minute
-        getServer().getConsoleSender().sendMessage("Queue Scanner will start in 10 seconds");
+        //getServer().getConsoleSender().sendMessage("Queue Scanner will start in 10 seconds");
 
         //discordManager = new Discord();
     }
@@ -181,7 +186,9 @@ public final class Chesticuffs extends JavaPlugin {
 
     static public class LOGGER{
         static public void log(String message){
-            Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "[DEBUG] " + message);
+            if(log) {
+                Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "[DEBUG] " + message);
+            }
         }
     }
 }

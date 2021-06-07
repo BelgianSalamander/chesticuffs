@@ -399,7 +399,7 @@ public class ChesticuffsGame {
         }
         if(traits.hasTrait(Trait.FRAGILE)){
             HP = 1;
-            DEF = 1;
+            DEF = 0;
         }
         try {
             boolean coalBlockCorePlaced = getCore(side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5) ||
