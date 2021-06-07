@@ -14,6 +14,8 @@ public class OpenInv implements CommandExecutor {
             sender.sendMessage("You do not have permission to run this command!");
             return true;
         }
+        //TODO This command does not work
+
         String key = args[0];
         Player player = (Player)sender;
         if(args[1].equalsIgnoreCase("red")){
