@@ -24,5 +24,8 @@ commands:
   testlink:
   #friends:
   gamestate:
+  reloaditems:
+  togglelogging:
+  addstronghold:
   #msg:
   #message:

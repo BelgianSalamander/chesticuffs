@@ -35,6 +35,8 @@ public class NewDebugGame implements CommandExecutor {
         Chesticuffs.addNewGame(key, game);
         chest.getPersistentDataContainer().set(ChestKeys.idKey, PersistentDataType.STRING, key);
         chest.update();
+        sender.sendMessage(ChatColor.GREEN + "Succesfully created a debug game with key '" + key + "'");
+        sender.sendMessage(ChatColor.GREEN + "Open game with /openinv " + key + " [red/blue]");
         return true;
     }
 }
