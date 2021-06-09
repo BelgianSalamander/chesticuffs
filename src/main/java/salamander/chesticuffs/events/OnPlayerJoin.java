@@ -11,12 +11,19 @@ import org.bukkit.potion.PotionEffectType;
 import salamander.chesticuffs.playerData.DataLoader;
 import salamander.chesticuffs.playerData.PlayerData;
 import salamander.chesticuffs.game.ChesticuffsGame;
+import salamander.chesticuffs.queue.ChesticuffsQueue;
+import salamander.chesticuffs.queue.QueueHandler;
 import salamander.chesticuffs.toolbar.ToolbarItems;
 
 public class OnPlayerJoin implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e){
+
+        for(ChesticuffsQueue queue1 : QueueHandler.queues) {
+            queue1.getPlayersInQueue().remove(e.getPlayer());
+        }
+
         if(e.getPlayer().getPersistentDataContainer().has(ChesticuffsGame.playerIdKey, PersistentDataType.STRING)){
             e.getPlayer().getPersistentDataContainer().remove(ChesticuffsGame.playerIdKey);
         }

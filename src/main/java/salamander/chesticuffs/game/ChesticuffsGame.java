@@ -1283,7 +1283,7 @@ public class ChesticuffsGame {
                     setInfoLoreLine(selectedItem, ChatColor.RED + "Item already facade");
                 }
                 break;
-            case LEATHER_HELMET:
+            /*case LEATHER_HELMET:
                 DEF++;
                 clickedItemMeta.getPersistentDataContainer().set(ItemHandler.getDefenceKey(), PersistentDataType.SHORT, DEF);
                 succesfullyUsed = true;
@@ -1466,7 +1466,7 @@ public class ChesticuffsGame {
                         /*int a = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
                         int d = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT);
                         int h = clickedItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
-                        */
+
 
                         succesfullyUsed = true;
                         broadcast(ChatColor.GREEN + "White dye has been used!");
@@ -1476,7 +1476,7 @@ public class ChesticuffsGame {
                 {
                     setInfoLoreLine(selectedItem, ChatColor.RED + "Item not dyed");
                 }
-                break;
+                break;*/
             default:
                 Chesticuffs.LOGGER.log("Reached default of usables switch statement");
         }

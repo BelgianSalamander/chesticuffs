@@ -166,6 +166,11 @@ public final class Chesticuffs extends JavaPlugin {
         return games.get(id);
     }
 
+    //overload for getting game from location
+    /*static public ChesticuffsGame getGame(String id){
+        return games.get(id);
+    }*/
+
     static public void addNewGame(String id, ChesticuffsGame game){
         games.put(id, game);
     }
