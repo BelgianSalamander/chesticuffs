@@ -50,6 +50,9 @@ public class ChesticuffsGame {
     boolean ended = false;
     private boolean pendingUsableSelection = false;
     private Integer usableTemporarySlot = null;
+    boolean lavaBucketCorePlaced = false;
+    boolean coalBlockCorePlaced = false;
+    boolean saddleCorePlaced = false;
 
     private static class sendMessage implements Runnable{
         final Player player;
@@ -259,8 +262,8 @@ public class ChesticuffsGame {
     private int getPriority(){
         int swapLength = 1;
         try{
-            if(getCore(1).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER) == 9
-            || getCore(2).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER) == 9){
+            if(saddleCorePlaced){//getCore(1).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER) == 9
+            //|| getCore(2).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER) == 9){
                 swapLength = 2;
             }
         }catch (NullPointerException e){}
@@ -354,18 +357,39 @@ public class ChesticuffsGame {
         }else{
             side = 2;
         }
+
+        //Your core
         ItemStack core = getCore(side);
         if(core != null) {
-            switch (core.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER)) {
-                case (1):
+            //Old ratshit switch
+            //core.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER)
+            switch (core.getType()) {
+                case IRON_BLOCK:
                     HP += 1;
                     break;
-                case (2):
+                case OAK_SAPLING:
+                case BIRCH_SAPLING:
+                case ACACIA_SAPLING:
+                case BAMBOO_SAPLING:
+                case DARK_OAK_SAPLING:
+                case JUNGLE_SAPLING:
+                case SPRUCE_SAPLING:
                     if (traits.hasTrait(Trait.PLANT)) {
                         HP = (short) Math.ceil(HP * 0.5);
                     }
                     break;
-                case (6):
+                //put all core effects into this method
+                //may not be optimal, but improves readability
+                case LAVA_BUCKET:
+                    lavaBucketCorePlaced = true;
+                    break;
+                case COAL_BLOCK:
+                    coalBlockCorePlaced = true;
+                    break;
+                case SADDLE:
+                    saddleCorePlaced = true;
+                    break;
+                case OXEYE_DAISY:
                     if (traits.hasTrait(Trait.PLANT)) {
                         HP -= 1;
                         DEF += 1;
@@ -374,25 +398,30 @@ public class ChesticuffsGame {
                         }
                     }
                     break;
-                case (7):
+                case DIAMOND_BLOCK:
                     DEF += 1;
                     break;
-                case (8):
+                case GOLD_BLOCK:
                     HP -= 1;
                     if (HP <= 0) {
                         return false;
                     }
                     break;
-                case(11):
+                case DRIED_KELP_BLOCK:
                     if(traits.hasTrait(Trait.AQUATIC)) HP++;
                     break;
+                case ROSE_BUSH:
+                    //GAME LOGIC FOR ROSE_BUSH IN COMBAT METHOD
+                    break;
+
             }
         }
 
+        //Enemy core logic
         ItemStack enemyCore = getCore(3 - side);
         if(enemyCore != null){
-            switch (enemyCore.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER)){
-                case(10):
+            switch (enemyCore.getType()){//enemyCore.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER)){
+                case JACK_O_LANTERN:
                     if(ATK > 0) ATK--;
                     break;
             }
@@ -402,8 +431,8 @@ public class ChesticuffsGame {
             DEF = 0;
         }
         try {
-            boolean coalBlockCorePlaced = getCore(side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5) ||
-                    getCore(3 - side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5);
+            //boolean coalBlockCorePlaced = getCore(side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5) ||
+            //        getCore(3 - side).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(5);
             if (coalBlockCorePlaced) {
 
                 traits.addTrait(Trait.FLAMMABLE);
@@ -472,13 +501,13 @@ public class ChesticuffsGame {
 
     private void doFireDamage(){
         chest.update();
-        boolean lavaBucketCorePlaced = false;
+        /*boolean lavaBucketCorePlaced = false;
         for(int i : new int[]{10, 16}){
-            if(chest.getBlockInventory().getItem(i).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(4)){
+            if(chest.getBlockInventory().getItem(i).getType()==Material.LAVA_BUCKET){//.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(4)){
                 lavaBucketCorePlaced = true;
                 break;
             }
-        }
+        }*/
 
         if(lavaBucketCorePlaced){
             broadcast(ChatColor.RED + "All items take fire damage from lava bucket core!");
@@ -616,7 +645,7 @@ public class ChesticuffsGame {
                 if(defendingItemTraits.hasTrait(Trait.FACADE))
                 {
                     attackerDamage = 0;
-                    broadcast("Due to facade being in play, attacker will deal 0 damage!");
+                    broadcast("Due to facade being in play, defender will deal 0 damage!");
                 }
 
                 if(attackingItemTraits.hasTrait(Trait.FLAME)){
@@ -710,7 +739,7 @@ public class ChesticuffsGame {
             //De-registers Game
             endGame(getPriority());
         }else{
-            if(defendingCoreMeta.getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER) == 12){
+            if(defendingCore.getType() == Material.ROSE_BUSH){//defendingCoreMeta.getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER) == 12){
                 ItemStack attackingCore = getCore(getPriority());
                 ItemMeta attackingCoreMeta = attackingCore.getItemMeta();
                 short attackingCoreHealth = attackingCoreMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
@@ -934,11 +963,14 @@ public class ChesticuffsGame {
     }
 
     private void coreClicked(int coreId){
+        //TODO remove coreID as parameter, pass in either ItemStack or Material
+        // make this switch statement use the material
         chest.update();
         switch(coreId){
             case(3):
                 if(getCore(turn).getItemMeta().getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT) <= 5){
                     broadcast(ChatColor.RED + "Cannot use enchanted golden apple, too low health!");
+                    break;
                 }
                 for(int x = turn * 5 - 5; x < turn * 5 - 1; x++){
                     for(int y = 0; y < 3; y++){
@@ -1075,6 +1107,21 @@ public class ChesticuffsGame {
         try{ Chesticuffs.LOGGER.log("Selected Item : " + selectedItem.getType().toString());}catch (NullPointerException e){}
         Chesticuffs.LOGGER.log("Pending Usable Selection : " + pendingUsableSelection);
         try{ Chesticuffs.LOGGER.log("Usable Temporary Data Slot : " + usableTemporarySlot);}catch (NullPointerException e){}
+    }
+
+    private void applyTrait(int slot, Trait trait)
+    {
+        ItemStack clickedItem = chest.getSnapshotInventory().getItem(slot);
+        ItemMeta clickedItemMeta = clickedItem.getItemMeta();
+        TraitsHolder traits = new TraitsHolder(clickedItemMeta);
+        if(!traits.hasTrait(trait))
+        {
+            if(traits.addTrait(trait))
+            {
+                traits.setTraitsOf(clickedItemMeta);
+                broadcast(ChatColor.GREEN + "Trait: " + trait + "has been applied to " + clickedItem.getType());
+            }
+        }
     }
 
     private void usableSelectedUsableItem(int slot){
@@ -1522,12 +1569,53 @@ public class ChesticuffsGame {
         }
     }
 
+    //why did I think this would be a good idea this is rat shit
+    private int getSideFromSlot(int slot)
+    {
+        int side = 0;
+        //if on left side
+        if(slot < 4 || slot > 8 && slot < 13 ||
+           slot > 17 && slot < 22)
+        {
+            side = 1;
+        }
+        else
+        {
+            side = 2;
+        }
+        return side;
+    }
+
     public void placeItem(ItemStack item, int slot){
         ItemStack itemToBePlaced = new ItemStack(item);
         itemToBePlaced.setAmount(1);
+
+        TraitsHolder traits = new TraitsHolder(itemToBePlaced.getItemMeta());
+
         boolean placed = buffItem(itemToBePlaced, slot % 9);
         item.setAmount(item.getAmount() - 1);
-        if(placed) chest.getSnapshotInventory().setItem(slot, itemToBePlaced);
+        if(placed) {
+            chest.getSnapshotInventory().setItem(slot, itemToBePlaced);
+
+            //if you're clicking on your side and your core is a music disc...
+            if(getSideFromSlot(slot) == 1)
+            {
+                //The one time where using the effectidKey is better is when there's multiple variants of the item
+                //Checking if the core is a music disc
+                if(getCore(1).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(13))
+                {
+                    //applyTrait(slot, Trait.RAGE);
+                }
+            }
+            else
+            {
+                if(getCore(2).getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER).equals(13))
+                {
+                    //applyTrait(slot, Trait.RAGE);
+                }
+            }
+
+        }
         else{
             broadcast(ChatColor.RED + "Item was placed but died immediately. LOL!");
         }

@@ -33,7 +33,8 @@ public enum Trait {
     STANDABLE("Standable", false),
     DRIED("Dried"),
     FACADE("Facade"),
-    DYED("Dyed");
+    DYED("Dyed"),
+    RAGE("Rage");
 
     private String displayName;
     static final int amountOfValues = 1;

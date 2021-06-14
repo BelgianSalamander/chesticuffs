@@ -2294,6 +2294,14 @@
         "flavor": "P L A N T",
         "effectID": 2
     },
+    "ENCHANTED_GOLDEN_APPLE": {
+        "type" : "core",
+        "HP" : 20,
+        "buff" : "Can be clicked on once to give one round of immunity to allies.",
+        "debuff" : "If the core is above 5 HP once used, go to 5 HP.",
+        "flavor" : "INFINITE POWER!",
+        "effectID" : 4
+    },
     "LAVA_BUCKET": {
         "type" : "core",
         "HP" : 20,
@@ -2365,6 +2373,28 @@
         "debuff": "",
         "flavor" : "Spiky",
         "effectID" : 12
+    },
+    "MUSIC_DISC_CAT" :{
+        "similar": [
+            "MUSIC_DISC_11",
+            "MUSIC_DISC_13",
+            "MUSIC_DISC_BLOCKS",
+            "MUSIC_DISC_CHIRP",
+            "MUSIC_DISC_FAR",
+            "MUSIC_DISC_MALL",
+            "MUSIC_DISC_MELLOHI",
+            "MUSIC_DISC_PIGSTEP",
+            "MUSIC_DISC_STAL",
+            "MUSIC_DISC_STRAD",
+            "MUSIC_DISC_WAIT",
+            "MUSIC_DISC_WARD"
+        ],
+        "type" : "core",
+        "HP" : 20,
+        "buff" : "Every item has Rage.",
+        "debuff": "Every item has Rage.",
+        "flavor" : "They all got three!",
+        "effectID" : 13
     },
 
 
