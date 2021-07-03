@@ -116,7 +116,7 @@ public class ChesticuffsGame {
     }
     private void playerTookTooLong() {
         broadcast(ChatColor.RED + "Player " + (turn == 1 ? "one" : "two") + " took too long to play!");
-        endGame(3 - turn);
+        nextTurn();
     }
 
     private void action(boolean longer){
@@ -126,7 +126,7 @@ public class ChesticuffsGame {
         timerTasks.clear();
 
         if(Chesticuffs.isDebugMode){
-            return;
+            return; //TODO Uncomment this
         }
 
         Player player = turn == 1 ? playerOne : playerTwo;
@@ -250,6 +250,10 @@ public class ChesticuffsGame {
         }else{
             bottomStickMeta.displayName(Component.text(ChatColor.BLUE + "Blue Priority"));
         }
+
+        List<Component> bottomStickLore = new ArrayList<>();
+        bottomStickLore.add(Component.text(ChatColor.GRAY + "Print game state"));
+        bottomStickMeta.lore(bottomStickLore);
         bottomStick.setItemMeta(bottomStickMeta);
     }
 
@@ -1095,6 +1099,7 @@ public class ChesticuffsGame {
         Chesticuffs.LOGGER.log("Player One : " + playerOne.getName());
         Chesticuffs.LOGGER.log("Player Two : " + playerTwo.getName());
         Chesticuffs.LOGGER.log("Round " + roundNumber + ", Phase " + phaseNumber + ", " + (turn == 1 ? "Red" : "Blue") + "'s turn");
+        Chesticuffs.LOGGER.log("Priority: " + (getPriority() == 1 ? "red" : "blue"));
         Chesticuffs.LOGGER.log("Player One:");
         try{ Chesticuffs.LOGGER.log("  Skips this phase : " + amountSkipsPlayerOne);}catch (NullPointerException e){}
         try{ Chesticuffs.LOGGER.log("  Amount placed this round : " + playerOneAmountPlacedThisRound);}catch (NullPointerException e){}
@@ -1643,10 +1648,106 @@ public class ChesticuffsGame {
         broadcastChanges();
     }
 
+    void nextTurn(){
+        switch (phaseNumber){
+            case(0):
+                if(getCore(1) == null || getCore(2) == null){
+                    turn = 3 - turn;
+                    if(getCore(turn) != null)
+                        turn = 3 - turn;
+                }else{
+                    turn = getPriority();
+                    selectedItem = null;
+                    phaseNumber = 1;
+                    playerOneSkipped = false;
+                    playerTwoSkipped = false;
+                    amountSkipsPlayerOne = 0;
+                    amountSkipsPlayerTwo = 0;
+                }
+                action(false);
+                broadcastChanges();
+                break;
+
+            case(1):
+            case(4):
+                if(turn == 1){
+                    playerOneSkipped = true;
+                    amountSkipsPlayerOne += 1;
+                    playerTwo.sendMessage(ChatColor.RED + "Red" + ChatColor.WHITE +  " skipped. Your turn!");
+                }else{
+                    playerTwoSkipped = true;
+                    amountSkipsPlayerTwo += 1;
+                    playerOne.sendMessage(ChatColor.BLUE + "Blue" + ChatColor.WHITE +  " skipped. Your turn!");
+                }
+                selectedItem = null;
+                if(playerOneSkipped && playerTwoSkipped){
+                    if(phaseNumber == 1){
+                        phaseNumber = 2;
+                        selectedItem = null;
+                        turn = getPriority();
+                        attackersAndDefenders.clear();
+                        attackersSelected = 0;
+                        broadcast( ChatColor.RED + "Attacking phase has started!");
+                        action(true);
+                    }else if(phaseNumber == 4){
+                        endRound();
+                        phaseNumber = 1;
+                        selectedItem = null;
+                        roundNumber += 1;
+                        turn = getPriority();
+                        playerOneAmountPlacedThisRound = 0;
+                        playerTwoAmountPlacedThisRound = 0;
+                        playerOneSkipped = false;
+                        playerTwoSkipped = false;
+                        broadcast(ChatColor.GREEN + "Round " + roundNumber + " has started!");
+                        if(getPriority() == 1){
+                            broadcast(ChatColor.RED + "Red Priority");
+                        }else{
+                            broadcast(ChatColor.BLUE + "Blue Priority");
+                        }
+                        action(false);
+                    }
+                }else {
+                    itemPlacementNextTurn();
+                }
+                broadcastChanges();
+                break;
+            case(2):
+                turn = 3 - turn;
+                phaseNumber = 3;
+                selectedSlot = null;
+                if(getPriority() == 1){
+                    broadcast(ChatColor.RED + "Red has chosen their attackers!");
+                }else{
+                    broadcast(ChatColor.BLUE + "Blue has chosen their attackers!");
+                }
+                action(true);
+                broadcastChanges();
+                break;
+            case(3):
+                phaseNumber = 4;
+                turn = 3 - getPriority();
+                selectedItem = null;
+                playerOneSkipped = false;
+                playerTwoSkipped = false;
+                broadcastChanges();
+                combat();
+                action(false);
+                break;
+        }
+    }
+
     public void handleClickEvent(InventoryClickEvent e){
         if(!(e.getWhoClicked() instanceof Player)){
             return;
         }
+
+        if(e.getClickedInventory().equals(playerOneInventory) || e.getClickedInventory().equals(playerTwoInventory))
+            if(e.getSlot() == 22) {
+                Chesticuffs.LOGGER.log("Player requested game state dump");
+                printGameState();
+            }
+
         Player player = (Player) e.getWhoClicked();
         e.setCancelled(true);
         if(turn == 1 && (! player.equals(playerOne))){
