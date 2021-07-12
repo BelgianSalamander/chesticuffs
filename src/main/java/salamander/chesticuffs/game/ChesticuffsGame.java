@@ -347,21 +347,21 @@ public class ChesticuffsGame {
         return startTime;
     }
 
-    private boolean buffItem(ItemStack item, int x){
+    private boolean buffItem(ItemStack item, int column){
         ItemMeta meta = item.getItemMeta();
         short ATK = meta.getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
         short DEF = meta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT);
         short HP = meta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
         TraitsHolder traits = new TraitsHolder(meta);
-        if(x == 0 || x == 8){
+        if(column == 0 || column == 8){
             ATK = (short) Math.ceil(ATK * 0.5);
             HP = (short) Math.ceil(HP * 1.5);
-        }else if(x == 3 || x == 5){
+        }else if(column == 3 || column == 5){
             ATK = (short) Math.ceil(ATK * 1.5);
             HP = (short) Math.ceil(HP * 0.5);
         }
         int side;
-        if(x < 4){
+        if(column < 4){
             side = 1;
         }else{
             side = 2;
@@ -372,6 +372,8 @@ public class ChesticuffsGame {
         if(core != null) {
             //Old ratshit switch
             //core.getItemMeta().getPersistentDataContainer().get(ItemHandler.getEffectIDKey(), PersistentDataType.INTEGER)
+
+            //New chad switch
             switch (core.getType()) {
                 case IRON_BLOCK:
                     HP += 1;
@@ -421,6 +423,9 @@ public class ChesticuffsGame {
                     break;
                 case ROSE_BUSH:
                     //GAME LOGIC FOR ROSE_BUSH IN COMBAT METHOD
+                    break;
+                case BONE_BLOCK:
+                    //GAME LOGIC FOR BONE_BLOCK IN COMBAT METHOD
                     break;
 
             }
@@ -644,7 +649,6 @@ public class ChesticuffsGame {
                 int attackerDamage = Math.max((properAttackerDamage - defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT)), 0);
                 int defenderDamage = Math.max((properDefenderDamage - attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT)), 0);
 
-
                 //TODO how tf would facade best be implemented
                 // this is the best i can come up with ahhhhhhhhhhhhhhhhhhhhhh
                 if(attackingItemTraits.hasTrait(Trait.FACADE))
@@ -685,6 +689,7 @@ public class ChesticuffsGame {
                     }
                 }
 
+                //Although it looks weird, the 2 if statements below handle dealing damage
                 if(!defendingItemTraits.hasTrait(Trait.IMMUNE)) {
                     defenderHP -= attackerDamage;
                     broadcast(defenderColor + defender.getType().toString() + ChatColor.GRAY + " (Slot " + attackerSlot + ") " + " takes " +
@@ -697,35 +702,51 @@ public class ChesticuffsGame {
                             defenderColor + defenderDamage + ChatColor.GRAY + " damage!");
                 }
 
-                if(attackerHP <= 0) {
+                if(attackerHP <= 0){
+                    if(attackingItemTraits.hasTrait(Trait.BREAK))
+                    {
+
+                    }
                     if(attackingItemTraits.hasTrait(Trait.SHRAPNEL)){
                         defenderHP -= 2;
                     }
+                    if(getCore(getPriority()).getType() == Material.BONE_BLOCK)
+                    {
+                        int[] attackerSpaces;
+                        if(getSideFromSlot(attackerSlot) == 1)
+                        {
+                            attackerSpaces = new int[]{0,1,2,3,9,11,12,18,19,20,21,22};
+                        }
+                        else
+                        {
+                            attackerSpaces = new int[]{5,6,7,8,14,15,17,23,24,25,26};;
+                        }
+                        ItemStack boneBlockRecoil = chest.getSnapshotInventory().getItem(attackerSpaces[new Random().nextInt(24)]);
+                        short recoilItemHP = boneBlockRecoil.getItemMeta().getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
+                        recoilItemHP -= 1;
+                        boneBlockRecoil.getItemMeta().getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, recoilItemHP);
+                    }
+                    chest.getSnapshotInventory().setItem(entry.getKey(), null);
+                }else{
+                    attackingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, attackerHP);
                 }
 
                 if(defenderHP <= 0){
                     if(defendingItemTraits.hasTrait(Trait.SHRAPNEL)){
                         attackerHP -= 2;
                     }
-                }
-
-                if(defenderHP <= 0){
                     if(defendingItemTraits.hasTrait(Trait.BREAK))
                     {
 
                     }
+                    if(getCore(getPriority()).getType() == Material.BONE_BLOCK)
+                    {
+                        attackerHP += 1;
+                        attackingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, attackerHP);
+                    }
                     chest.getSnapshotInventory().setItem(entry.getValue(), null);
                 }else{
                     defendingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, defenderHP);
-                }
-                if(attackerHP <= 0){
-                    if(attackingItemTraits.hasTrait(Trait.BREAK))
-                    {
-
-                    }
-                    chest.getSnapshotInventory().setItem(entry.getKey(), null);
-                }else{
-                    attackingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, attackerHP);
                 }
 
                 attacker.setItemMeta(attackingItemMeta);
@@ -1257,7 +1278,7 @@ public class ChesticuffsGame {
                 if(turn == 2 && slotX < 5) break;
 
                 //TODO is a || Trait.STANDABLE.isInMeta(clickedItemMeta) needed
-                // in this if statement?  Seems like the armor stand is not yet added but not
+                // in the below if statement?  Seems like the armor stand is not yet added but not
                 // entirely sure what the HashMap is for in future so leaving for now.
 
                 if(Trait.POTTABLE.isInMeta(clickedItemMeta)){
@@ -1586,18 +1607,16 @@ public class ChesticuffsGame {
     //why did I think this would be a good idea this is rat shit
     private int getSideFromSlot(int slot)
     {
-        int side = 0;
         //if on left side
         if(slot < 4 || slot > 8 && slot < 13 ||
            slot > 17 && slot < 22)
         {
-            side = 1;
+            return 1;
         }
         else
         {
-            side = 2;
+            return 2;
         }
-        return side;
     }
 
     public void placeItem(ItemStack item, int slot){
