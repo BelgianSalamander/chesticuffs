@@ -18,6 +18,10 @@ public class SelectChest implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if(!command.getName().equalsIgnoreCase("SelectChest"))
+        {
+            return false;
+        }
+
         if(!sender.isOp()){
             sender.sendMessage(ChatColor.RED + "You do not have permission to run this command");
             return true;
