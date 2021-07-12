@@ -13,6 +13,14 @@ public class TraitsHolder {
     private boolean[] traits;
     private int[] values;
 
+    public boolean[] getTraits() {
+        return traits;
+    }
+
+    public int[] getValues() {
+        return values;
+    }
+
     public TraitsHolder(ItemMeta meta){
         traits = new boolean[Trait.length];
 

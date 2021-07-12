@@ -34,10 +34,14 @@ public enum Trait {
     DRIED("Dried"),
     FACADE("Facade"),
     DYED("Dyed"),
-    RAGE("Rage");
+    RAGE("Rage"),
+    REDSTONE("Redstone"),
+    POWERED("Powered"),
+    WIRE("Wire"),
+    SHOOT("Shoot");
 
     private String displayName;
-    static final int amountOfValues = 1;
+    public static final int amountOfValues = 1;
     private int valueIndex;
     private boolean displayed = true;
     public final static int length = Trait.values().length;

@@ -247,11 +247,11 @@ public class Discord extends ListenerAdapter implements CommandExecutor, Listene
                 return;
             }
 
-            String itemName = args[1].toUpperCase();
+            String itemName = args[1].toUpperCase().replace(' ', '_');
             JSONObject itemStats =  (JSONObject) ItemHandler.itemData.get(itemName);
 
             if(itemStats == null){
-                e.getMessage().getChannel().sendMessage(":x: **|** Error! " + e.getAuthor().getAsMention() + ", couldn't find that item!").queue();
+                e.getMessage().getChannel().sendMessage(":x: **|** Error! " + e.getAuthor().getAsMention() + ", couldn't find that item! Either it hasn't been added yet or you made a typo.").queue();
                 return;
             }
 

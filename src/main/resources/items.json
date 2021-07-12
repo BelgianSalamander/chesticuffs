@@ -2250,6 +2250,47 @@
         "traits" : [],
         "flavor" : ""
     },
+    "REDSTONE" : {
+        "similar" : [],
+        "type" : "item",
+        "ATK" : 0,
+        "DEF" : 0,
+        "HP" : 1,
+        "traits" : [
+            "Redstone",
+            "Wire"
+        ]
+    },
+    "TNT" : {
+        "similar" : [],
+        "type" : "item",
+        "ATK" : 1,
+        "DEF" : 0,
+        "HP" : 1,
+        "traits" : [
+            "Redstone"
+        ]
+    },
+    "PISTON" : {
+        "similar" : [],
+        "type" : "item",
+        "ATK" : 2,
+        "DEF" : 3,
+        "HP" : 3,
+        "traits" : [
+            "Redstone"
+        ]
+    },
+    "DISPENSER" : {
+        "similar" : [],
+        "type" : "item",
+        "ATK" : 3,
+        "DEF" : 1,
+        "HP" : 4,
+        "traits" : [
+            "Redstone"
+        ]
+    },
 
 
 

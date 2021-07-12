@@ -24,6 +24,7 @@ import salamander.chesticuffs.inventory.ChestKeys;
 import salamander.chesticuffs.inventory.ItemHandler;
 import salamander.chesticuffs.traits.Trait;
 import salamander.chesticuffs.traits.TraitsHolder;
+import salamander.chesticuffs.game.Phase;
 
 import java.util.*;
 
@@ -33,7 +34,8 @@ public class ChesticuffsGame {
     private final Player playerOne;
     private Player playerTwo;
     private final Chest chest;
-    int roundNumber, phaseNumber, turn = 0;
+    int roundNumber, turn = 0;
+    Phase phase;
     int amountSkipsPlayerOne, amountSkipsPlayerTwo, playerOneAmountPlacedThisRound, playerTwoAmountPlacedThisRound, attackersSelected;
     Integer selectedSlot;
     boolean playerOneSkipped, playerTwoSkipped;
@@ -153,6 +155,9 @@ public class ChesticuffsGame {
     }
 
     private void setupGame(){
+        chest.getSnapshotInventory().clear();
+        chest.update();
+
         playerOne.getPersistentDataContainer().set(playerIdKey, PersistentDataType.STRING, id);
         playerTwo.getPersistentDataContainer().set(playerIdKey, PersistentDataType.STRING, id);
 
@@ -211,21 +216,21 @@ public class ChesticuffsGame {
         }else{
             topLore.add(Component.text(ChatColor.BLUE + "Blue's Turn"));
         }
-        topLore.add(Component.text(ChatColor.GRAY + "" + ChatColor.BOLD + "Phase " + phaseNumber + ":"));
-        switch(phaseNumber) {
-            case (0):
+        topLore.add(Component.text(ChatColor.GRAY + "" + ChatColor.BOLD + "Phase " + phase.getPhaseNumber() + ":"));
+        switch(phase) {
+            case CORE_PLACEMENT:
                 topLore.add(Component.text( ChatColor.BOLD + "" + ChatColor.GRAY + "Core Placement"));
                 break;
-            case(1):
+            case OPENING_PHASE:
                 topLore.add(Component.text(ChatColor.BOLD + "" + ChatColor.GRAY + "Item Placement"));
                 break;
-            case(2):
+            case ATTACKER_SELECTION:
                 topLore.add(Component.text(ChatColor.BOLD + "" + ChatColor.GRAY + "Declare Attackers"));
                 break;
-            case(3):
+            case DEFENDER_SELECTION:
                 topLore.add(Component.text(ChatColor.BOLD + "" + ChatColor.GRAY + "Declare Defenders"));
                 break;
-            case(4):
+            case CLOSING_PHASE:
                 topLore.add(Component.text(ChatColor.BOLD + "" + ChatColor.GRAY + "Closing Phase"));
                 break;
             default:
@@ -464,11 +469,12 @@ public class ChesticuffsGame {
                     for(int x = side * 5 - 5; x < side * 5 - 1; x++){
                         for(int y = 0; y < 3; y++){
                             ItemStack item = chest.getSnapshotInventory().getItem(y * 9 + x);
-                            TraitsHolder traits = new TraitsHolder(item);
+
                             if(item == null) continue;
                             if(item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING) == null) continue;
                             if(item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("item")){
                                 short HP = item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
+                                TraitsHolder traits = new TraitsHolder(item);
                                 ItemMeta meta = item.getItemMeta();
                                 if(traits.hasTrait(Trait.PLANT)){
                                     meta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, (short) (HP + 1));
@@ -722,20 +728,23 @@ public class ChesticuffsGame {
                     attackingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, attackerHP);
                 }
 
-                attackingItemTraits.removeTrait(Trait.IMMUNE);
-                attackingItemTraits.removeTrait(Trait.STUNNED);
-                attackingItemTraits.removeTrait(Trait.FACADE);
-
-                defendingItemTraits.removeTrait(Trait.IMMUNE);
-                defendingItemTraits.removeTrait(Trait.STUNNED);
-                defendingItemTraits.removeTrait(Trait.FACADE);
-
                 attacker.setItemMeta(attackingItemMeta);
                 defender.setItemMeta(defendingItemMeta);
-                ItemHandler.setLore(attacker);
-                ItemHandler.setLore(defender);
             }
         }
+
+        for(int i = 0; i < 27; i++){
+            ItemStack item = chest.getSnapshotInventory().getItem(i);
+            if(item != null){
+                TraitsHolder traits = new TraitsHolder(item);
+                traits.removeTrait(Trait.IMMUNE);
+                traits.removeTrait(Trait.STUNNED);
+                traits.removeTrait(Trait.FACADE);
+                traits.setTraitsOf(item);
+                ItemHandler.setLore(item);
+            }
+        }
+
         defendingCoreData.set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, coreHealth);
         defendingCore.setItemMeta(defendingCoreMeta);
         ItemHandler.setLore(defendingCore);
@@ -1098,7 +1107,7 @@ public class ChesticuffsGame {
         Chesticuffs.LOGGER.log("Game Identifier : " + id);
         Chesticuffs.LOGGER.log("Player One : " + playerOne.getName());
         Chesticuffs.LOGGER.log("Player Two : " + playerTwo.getName());
-        Chesticuffs.LOGGER.log("Round " + roundNumber + ", Phase " + phaseNumber + ", " + (turn == 1 ? "Red" : "Blue") + "'s turn");
+        Chesticuffs.LOGGER.log("Round " + roundNumber + ", Phase " + phase + ", " + (turn == 1 ? "Red" : "Blue") + "'s turn");
         Chesticuffs.LOGGER.log("Priority: " + (getPriority() == 1 ? "red" : "blue"));
         Chesticuffs.LOGGER.log("Player One:");
         try{ Chesticuffs.LOGGER.log("  Skips this phase : " + amountSkipsPlayerOne);}catch (NullPointerException e){}
@@ -1649,8 +1658,8 @@ public class ChesticuffsGame {
     }
 
     void nextTurn(){
-        switch (phaseNumber){
-            case(0):
+        switch (phase){
+            case CORE_PLACEMENT:
                 if(getCore(1) == null || getCore(2) == null){
                     turn = 3 - turn;
                     if(getCore(turn) != null)
@@ -1658,7 +1667,7 @@ public class ChesticuffsGame {
                 }else{
                     turn = getPriority();
                     selectedItem = null;
-                    phaseNumber = 1;
+                    phase = Phase.OPENING_PHASE;
                     playerOneSkipped = false;
                     playerTwoSkipped = false;
                     amountSkipsPlayerOne = 0;
@@ -1668,8 +1677,8 @@ public class ChesticuffsGame {
                 broadcastChanges();
                 break;
 
-            case(1):
-            case(4):
+            case OPENING_PHASE:
+            case CLOSING_PHASE:
                 if(turn == 1){
                     playerOneSkipped = true;
                     amountSkipsPlayerOne += 1;
@@ -1681,17 +1690,17 @@ public class ChesticuffsGame {
                 }
                 selectedItem = null;
                 if(playerOneSkipped && playerTwoSkipped){
-                    if(phaseNumber == 1){
-                        phaseNumber = 2;
+                    if(phase.equals(Phase.OPENING_PHASE)){
+                        phase = Phase.ATTACKER_SELECTION;
                         selectedItem = null;
                         turn = getPriority();
                         attackersAndDefenders.clear();
                         attackersSelected = 0;
                         broadcast( ChatColor.RED + "Attacking phase has started!");
                         action(true);
-                    }else if(phaseNumber == 4){
+                    }else if(phase.equals(Phase.CLOSING_PHASE)){
                         endRound();
-                        phaseNumber = 1;
+                        phase = Phase.OPENING_PHASE;
                         selectedItem = null;
                         roundNumber += 1;
                         turn = getPriority();
@@ -1712,9 +1721,9 @@ public class ChesticuffsGame {
                 }
                 broadcastChanges();
                 break;
-            case(2):
+            case ATTACKER_SELECTION:
                 turn = 3 - turn;
-                phaseNumber = 3;
+                phase = Phase.DEFENDER_SELECTION;
                 selectedSlot = null;
                 if(getPriority() == 1){
                     broadcast(ChatColor.RED + "Red has chosen their attackers!");
@@ -1724,8 +1733,8 @@ public class ChesticuffsGame {
                 action(true);
                 broadcastChanges();
                 break;
-            case(3):
-                phaseNumber = 4;
+            case DEFENDER_SELECTION:
+                phase = Phase.CLOSING_PHASE;
                 turn = 3 - getPriority();
                 selectedItem = null;
                 playerOneSkipped = false;
@@ -1734,6 +1743,35 @@ public class ChesticuffsGame {
                 combat();
                 action(false);
                 break;
+        }
+    }
+
+    private void powerItem(int slot){
+        ItemStack item = chest.getSnapshotInventory().getItem(slot);
+        if(item == null) return;
+        ItemMeta meta = item.getItemMeta();
+        if(meta == null) return;
+        if(meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING) == "item"){
+            TraitsHolder traits = new TraitsHolder(item);
+            if(!traits.hasTrait(Trait.REDSTONE)) return;
+            if(traits.addTrait(Trait.POWERED)) {
+                //meta.addEnchant(Enchantment.LUCK, 0, true);
+                if(traits.hasTrait(Trait.WIRE)){
+                    int row = slot / 9;
+                    int column = slot % 9;
+                    if(row != 0) powerItem(slot - 1);
+                    if(row != 8) powerItem(slot + 1);
+                    if(column != 0) powerItem(slot - 9);
+                    if(column != 2) powerItem(slot + 9);
+                }
+                switch(item.getType()){
+                    case DISPENSER:
+                        int direction = 3 - 2 * getSideFromSlot(slot);
+                }
+            }
+            traits.setTraitsOf(meta);
+            item.setItemMeta(meta);
+            ItemHandler.setLore(item);
         }
     }
 
@@ -1780,8 +1818,8 @@ public class ChesticuffsGame {
             defenderColor = ChatColor.RED;
         }
 
-        switch(phaseNumber){
-            case(0)://Placing of cores
+        switch(phase){
+            case CORE_PLACEMENT://Placing of cores
                 if(e.getClickedInventory().equals(player.getInventory())){
                     ItemStack item = e.getCurrentItem();
                     if(item == null || item.getType() == Material.AIR){
@@ -1812,7 +1850,7 @@ public class ChesticuffsGame {
                             }else{
                                 turn = getPriority();
                                 selectedItem = null;
-                                phaseNumber = 1;
+                                phase = Phase.OPENING_PHASE;
                                 playerOneSkipped = false;
                                 playerTwoSkipped = false;
                                 amountSkipsPlayerOne = 0;
@@ -1859,8 +1897,8 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
-            case(1)://opening phase
-            case(4)://closing phase
+            case OPENING_PHASE://opening phase
+            case CLOSING_PHASE://closing phase
                 if(e.getClickedInventory().equals(player.getInventory())){
                     broadcastChanges(); //Clears all virtual green glass panes if there are any (Because the panes aren't in the actual chest)
                     selectedItem = null;
@@ -1970,17 +2008,17 @@ public class ChesticuffsGame {
                         }
                         selectedItem = null;
                         if(playerOneSkipped && playerTwoSkipped){
-                            if(phaseNumber == 1){
-                                phaseNumber = 2;
+                            if(phase.equals(Phase.OPENING_PHASE)){
+                                phase = Phase.ATTACKER_SELECTION;
                                 selectedItem = null;
                                 turn = getPriority();
                                 attackersAndDefenders.clear();
                                 attackersSelected = 0;
                                 broadcast( ChatColor.RED + "Attacking phase has started!");
                                 action(true);
-                            }else if(phaseNumber == 4){
+                            }else if(phase.equals(Phase.CLOSING_PHASE)){
                                 endRound();
-                                phaseNumber = 1;
+                                phase = Phase.OPENING_PHASE;
                                 selectedItem = null;
                                 roundNumber += 1;
                                 turn = getPriority();
@@ -2014,14 +2052,14 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
-            case(2)://attacking phase
+            case ATTACKER_SELECTION:
 
                 //Check if they clicked on their side
                 if(e.getClickedInventory().equals(currentInv)){
                     if(e.getSlot() % 9 == 4){
                         if(e.getSlot() == 13){
                             turn = 3 - turn;
-                            phaseNumber = 3;
+                            phase = Phase.DEFENDER_SELECTION;
                             selectedSlot = null;
                             if(getPriority() == 1){
                                 broadcast(ChatColor.RED + "Red has chosen their attackers!");
@@ -2076,7 +2114,7 @@ public class ChesticuffsGame {
                 }
 
                 break;
-            case(3): //defense phase
+            case DEFENDER_SELECTION: //defense phase
 
                 if(e.getCurrentItem() == null) {
                     selectedSlot = null;
@@ -2097,7 +2135,7 @@ public class ChesticuffsGame {
                     }
                     if(e.getSlot() % 9 == 4){
                         if(e.getSlot() == 13){
-                            phaseNumber = 4;
+                            phase = Phase.CLOSING_PHASE;
                             turn = 3 - getPriority();
                             selectedItem = null;
                             playerOneSkipped = false;

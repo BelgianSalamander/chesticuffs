@@ -70,7 +70,7 @@ public class ItemHandler {
 
     public static NamespacedKey getTraitValueKey() {return traitValueKey; }
 
-    static NamespacedKey typeKey, damageKey, defenceKey, healthKey, flavorKey, traitsKey, sideKey, buffKey, debuffKey, effectIDKey, descriptionKey, useLimitKey, traitValueKey;
+    static NamespacedKey typeKey, damageKey, defenceKey, healthKey, flavorKey, traitsKey, sideKey, buffKey, debuffKey, effectIDKey, descriptionKey, useLimitKey, traitValueKey, statIncreaseLeftKey;
     static public JSONObject itemData;
     static public ItemStack baseCore;
 
@@ -135,7 +135,7 @@ public class ItemHandler {
         descriptionKey = new NamespacedKey(Chesticuffs.getPlugin(), "description");
         useLimitKey = new NamespacedKey(Chesticuffs.getPlugin(), "useLimit");
         traitValueKey = new NamespacedKey(Chesticuffs.getPlugin(), "traitlevel");
-
+        statIncreaseLeftKey = new NamespacedKey(Chesticuffs.getPlugin(), "incr");
     }
 
     static public void registerItem(ItemStack item){
@@ -160,11 +160,16 @@ public class ItemHandler {
 
                         TraitsHolder holder = new TraitsHolder(traits);
 
+                        byte increaseLeft = 0;
+                        Object data = itemStats.get("maxIncr");
+                        if(data != null) increaseLeft = (byte) data;
+
                         //Give the actual item those stats
                         meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "item");
                         meta.getPersistentDataContainer().set(damageKey, PersistentDataType.SHORT, ATK);
                         meta.getPersistentDataContainer().set(defenceKey, PersistentDataType.SHORT, DEF);
                         meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, HP);
+                        meta.getPersistentDataContainer().set(statIncreaseLeftKey, PersistentDataType.BYTE, increaseLeft);
                         holder.setTraitsOf(meta);
                         meta.getPersistentDataContainer().set(flavorKey, PersistentDataType.STRING, flavor);
                     } else if (itemStats.get("type").equals("core")) {

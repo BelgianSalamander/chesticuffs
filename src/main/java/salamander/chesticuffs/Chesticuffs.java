@@ -99,7 +99,7 @@ public final class Chesticuffs extends JavaPlugin {
         ItemHandler.init(); //ItemHandler loads items from items.json
         ChestManager.init(); //Loads chests
         ChestKeys.init(); //Create NamespacedKeys for chest Persistent Data Container
-        WorldHandler.init(); //Create worlds TODO Uncomment before release!
+        //WorldHandler.init(); //Create worlds TODO Uncomment before release!
         DataLoader.loadData(); //Loads PlayerData
         ToolbarItems.init(); //Initialises items for a toolbar item menu (currently not in use)
         QueueHandler.init();
@@ -143,18 +143,18 @@ public final class Chesticuffs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PortalEvent(), this);
 
         getServer().getScheduler().runTaskTimer(this, new QueueScanner(), 200, 20); //Schedules queue scanner to run every second
-        getServer().getScheduler().runTaskTimer(this, new updateDataAndStuff(), 1200, 1200); //Updates percentiles and leaderboard every minute
-        getServer().getConsoleSender().sendMessage("Queue Scanner will start in 10 seconds");
+        //getServer().getScheduler().runTaskTimer(this, new updateDataAndStuff(), 1200, 1200); //Updates percentiles and leaderboard every minute
+        //getServer().getConsoleSender().sendMessage("Queue Scanner will start in 10 seconds");
 
-        discordManager = new Discord();
+        //discordManager = new Discord();
     }
 
     @Override
     public void onDisable() {
         ChestManager.saveChests();
         DataLoader.saveData();
-        discordManager.save();
-        discordManager.stop();
+        //discordManager.save();
+        //discordManager.stop();
     }
 
     static public JavaPlugin getPlugin(){
