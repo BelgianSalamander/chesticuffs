@@ -15,6 +15,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import salamander.chesticuffs.Chesticuffs;
+import salamander.chesticuffs.MessageLevel;
 import salamander.chesticuffs.traits.Trait;
 import salamander.chesticuffs.traits.TraitsHolder;
 
@@ -162,7 +163,7 @@ public class ItemHandler {
 
                         byte increaseLeft = 0;
                         Object data = itemStats.get("maxIncr");
-                        if(data != null) increaseLeft = (byte) data;
+                        if(data != null) increaseLeft = (byte) (long) data;
 
                         //Give the actual item those stats
                         meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "item");
@@ -204,7 +205,7 @@ public class ItemHandler {
                     setLore(item);
                 }
             }catch (NullPointerException e){
-                Chesticuffs.LOGGER.log("Error when registering " + item.getType().toString());
+                Chesticuffs.LOGGER.log("Error when registering " + item.getType().toString(), MessageLevel.ERROR);
                 e.printStackTrace();
             }
         }
@@ -290,6 +291,90 @@ public class ItemHandler {
             lore.add(Component.text(ChatColor.WHITE + "\"" + flavor + "\""));
             meta.lore(lore);
             item.setItemMeta(meta);
+        }
+    }
+
+    //Helper Methods
+    static public ItemStack createItem(Material material, int count, short ATK, short DEF, short HP){
+        ItemStack item = new ItemStack(material, count);
+        ItemMeta meta = item.getItemMeta();
+        meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "item");
+        setStats(meta, ATK, DEF, HP);
+        item.setItemMeta(meta);
+        setLore(item);
+        return item;
+    }
+
+    static public ItemStack createItem(Material material, int count, int ATK, int DEF, int HP){
+        return createItem(material, count, (short) ATK, (short) DEF, (short) HP);
+    }
+
+    static public void setStats(ItemMeta meta, short ATK, short DEF, short HP){
+        meta.getPersistentDataContainer().set(damageKey, PersistentDataType.SHORT, ATK);
+        meta.getPersistentDataContainer().set(defenceKey, PersistentDataType.SHORT, DEF);
+        meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, HP);
+    }
+
+    //Returns true if the item died. This does not remove it from the board
+    static public boolean dealDamageTo(ItemMeta meta, short damage){
+        short itemHP = getHP(meta);
+        short itemDEF = getDEF(meta);
+        int actualDamage = Math.max(0, damage - itemDEF);
+        itemHP -= actualDamage;
+        setHP(meta, itemHP);
+        return itemHP <= 0;
+    }
+
+    //Returns true if the item is dead. This does not remove it from the board
+    static public boolean dealTrueDamageTo(ItemMeta meta, short damage){
+        short itemHP = getHP(meta);
+        itemHP -= damage;
+        setHP(meta, itemHP);
+        return itemHP <= 0;
+    }
+
+    static public short getATK(ItemMeta meta){return meta.getPersistentDataContainer().get(damageKey, PersistentDataType.SHORT);}
+    static public void setATK(ItemMeta meta, short ATK){meta.getPersistentDataContainer().set(damageKey, PersistentDataType.SHORT, ATK);}
+    static public void incrementATK(ItemMeta meta){
+        try {
+            byte incrementAllowed = meta.getPersistentDataContainer().get(statIncreaseLeftKey, PersistentDataType.BYTE);
+            if(incrementAllowed > 0){
+                short ATK = getATK(meta);
+                setATK(meta, (short) (1 + ATK));
+                meta.getPersistentDataContainer().set(statIncreaseLeftKey, PersistentDataType.BYTE, (byte)(incrementAllowed - 1));
+            }
+        }catch(NullPointerException e) {
+
+        }
+    }
+
+    static public short getDEF(ItemMeta meta){return meta.getPersistentDataContainer().get(defenceKey, PersistentDataType.SHORT);}
+    static public void setDEF(ItemMeta meta, short DEF){meta.getPersistentDataContainer().set(defenceKey, PersistentDataType.SHORT, DEF);}
+    static public void incrementDEF(ItemMeta meta){
+        try {
+            byte incrementAllowed = meta.getPersistentDataContainer().get(statIncreaseLeftKey, PersistentDataType.BYTE);
+            if(incrementAllowed > 0){
+                short DEF = getDEF(meta);
+                setDEF(meta, (short) (1 + DEF));
+                meta.getPersistentDataContainer().set(statIncreaseLeftKey, PersistentDataType.BYTE, (byte)(incrementAllowed - 1));
+            }
+        }catch(NullPointerException e) {
+
+        }
+    }
+
+    static public short getHP(ItemMeta meta){return meta.getPersistentDataContainer().get(healthKey, PersistentDataType.SHORT);}
+    static public void setHP(ItemMeta meta, short HP){meta.getPersistentDataContainer().set(healthKey, PersistentDataType.SHORT, HP);}
+    static public void incrementHP(ItemMeta meta){
+        try {
+            byte incrementAllowed = meta.getPersistentDataContainer().get(statIncreaseLeftKey, PersistentDataType.BYTE);
+            if(incrementAllowed > 0){
+                short HP = getHP(meta);
+                setHP(meta, (short) (1 + HP));
+                meta.getPersistentDataContainer().set(statIncreaseLeftKey, PersistentDataType.BYTE, (byte)(incrementAllowed - 1));
+            }
+        }catch(NullPointerException e) {
+
         }
     }
 

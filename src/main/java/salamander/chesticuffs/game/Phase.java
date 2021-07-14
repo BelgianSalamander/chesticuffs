@@ -2,10 +2,10 @@ package salamander.chesticuffs.game;
 
 public enum Phase {
     CORE_PLACEMENT(0),
-    OPENING_PHASE(1),
-    ATTACKER_SELECTION(2),
-    DEFENDER_SELECTION(3),
-    REDSTONE(4),
+    REDSTONE(1),
+    OPENING_PHASE(2),
+    ATTACKER_SELECTION(3),
+    DEFENDER_SELECTION(4),
     CLOSING_PHASE(5);
 
     public int getPhaseNumber() {

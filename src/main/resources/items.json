@@ -1483,7 +1483,7 @@
             "Plant",
             "Compostable"
         ],
-        "flavor" : ""
+        "flavor" : "Sweet"
     },
     "KELP": {
         "similar" : [],
@@ -2259,7 +2259,8 @@
         "traits" : [
             "Redstone",
             "Wire"
-        ]
+        ],
+        "flavor" : "It's a bit dusty in here"
     },
     "TNT" : {
         "similar" : [],
@@ -2269,7 +2270,8 @@
         "HP" : 1,
         "traits" : [
             "Redstone"
-        ]
+        ],
+        "flavor" : "CREEPER"
     },
     "PISTON" : {
         "similar" : [],
@@ -2279,7 +2281,19 @@
         "HP" : 3,
         "traits" : [
             "Redstone"
-        ]
+        ],
+        "flavor" : "What a pushover!"
+    },
+    "STICKY_PISTON" : {
+        "similar" : [],
+        "type" : "item",
+        "ATK" : 3,
+        "DEF" : 3,
+        "HP" : 3,
+        "traits" : [
+            "Redstone"
+        ],
+        "flavor" : "What a pushover!"
     },
     "DISPENSER" : {
         "similar" : [],
@@ -2289,9 +2303,91 @@
         "HP" : 4,
         "traits" : [
             "Redstone"
-        ]
+        ],
+        "flavor" : "Your local dispensary at your service"
     },
-
+    "DROPPER" : {
+        "similar" : [],
+        "type" : "item",
+        "ATK" : 0,
+        "DEF" : 1,
+        "HP" : 4,
+        "traits" : [
+            "Redstone"
+        ],
+        "flavor" : "DROP IT! Good boy :)"
+    },
+    "OAK_TRAPDOOR" : {
+        "similar" : [
+            "BIRCH_TRAPDOOR",
+            "DARK_OAK_TRAPDOOR",
+            "JUNGLE_TRAPDOOR",
+            "ACACIA_TRAPDOOR",
+            "SPRUCE_TRAPDOOR"
+        ],
+        "type" : "item",
+        "ATK" : 1,
+        "DEF" : 0,
+        "HP" : 2,
+        "maxIncr" : 5,
+        "traits" : [
+            "Redstone"
+        ],
+        "flavor" : "Mind the trapdo- too late"
+    },
+    "CRIMSON_TRAPDOOR" : {
+        "type" : "item",
+        "ATK" : 1,
+        "DEF" : 0,
+        "HP" : 2,
+        "maxIncr" : 6,
+        "traits" : [
+            "Redstone"
+        ],
+        "flavor" : "IT'S A TRAP!"
+    },
+    "WARPED_TRAPDOOR" : {
+        "type" : "item",
+        "ATK" : 1,
+        "DEF" : 0,
+        "HP" : 2,
+        "maxIncr" : 4,
+        "traits" : [
+            "Redstone"
+        ],
+        "flavor" : "Oh - a trap"
+    },
+    "IRON_TRAPDOOR" : {
+        "type" : "item",
+        "ATK" : 1,
+        "DEF" : 0,
+        "HP" : 2,
+        "maxIncr" : 3,
+        "traits" : [
+            "Redstone"
+        ],
+        "flavor" : "This... isn't a trap"
+    },
+    "LEVER" : {
+        "type" : "item",
+        "ATK" : 0,
+        "DEF" : 0,
+        "HP"  : 2,
+        "traits" : [
+            "Redstone"
+        ],
+        "flavor" : "I just flip the switch"
+    },
+    "NOTE_BLOCK" : {
+        "type" : "item",
+        "ATK" : 0,
+        "DEF" : 0,
+        "HP": 2,
+        "traits" : [
+            "Redstone"
+        ],
+        "flavor" : "Play us a tune!"
+    },
 
 
 
@@ -2436,6 +2532,14 @@
         "debuff": "Every item has Rage.",
         "flavor" : "They all got three!",
         "effectID" : 13
+    },
+    "BONE_BLOCK" : {
+        "type": "core",
+        "HP" : 20,
+        "buff" : "When an ally kills an enemy, the killer gains +1 HP.",
+        "debuff" : "When an ally dies, a random ally loses -1 HP.",
+        "flavor" : "I think I'm about to steal!",
+        "effectID" : 69
     },
 
 

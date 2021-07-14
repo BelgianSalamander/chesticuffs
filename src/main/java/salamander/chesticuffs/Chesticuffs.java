@@ -20,7 +20,7 @@ import java.util.*;
 public final class Chesticuffs extends JavaPlugin {
     private static File itemsFile, chestsFile, playerFile, queuesFile, tokenFile, discordLinksFile;
     static private boolean queueActive = true;
-    static public boolean isDebugMode = false;
+    static public boolean isDebugMode = true; //TODO Change to false before release
     static public boolean log = true;
     static public Discord discordManager;
     public static int K = 40;
@@ -123,7 +123,7 @@ public final class Chesticuffs extends JavaPlugin {
         //getPlugin().getCommand("gamestate").setExecutor(new GameState());
         getPlugin().getCommand("reloaditems").setExecutor(new ReloadItems());
         getPlugin().getCommand("togglelogging").setExecutor(new ToggleLogging());
-        //getPlugin().getCommand("addstronghold").setExecutor(new AddStrongholdCommand()); //TODO This must not be present when releasing
+        getPlugin().getCommand("dropper").setExecutor(new DropperTest());
         //getPlugin().getCommand("friends").setExecutor(new Friends()); //Used by players to manage their friends list
         //getPlugin().getCommand("msg").setExecutor(new Friends());
         //getPlugin().getCommand("message").setExecutor(new Friends());
@@ -188,9 +188,9 @@ public final class Chesticuffs extends JavaPlugin {
     }
 
     static public class LOGGER{
-        static public void log(String message){
+        static public void log(String message, MessageLevel level){
             if(log) {
-                Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "[DEBUG] " + message);
+                Bukkit.getConsoleSender().sendMessage(level.getPrefix() + message);
             }
         }
     }

@@ -26,6 +26,6 @@ commands:
   gamestate:
   reloaditems:
   togglelogging:
-  addstronghold:
+  dropper:
   #msg:
   #message:

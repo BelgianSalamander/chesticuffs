@@ -15,8 +15,6 @@ import salamander.chesticuffs.ChestManager;
 import salamander.chesticuffs.Chesticuffs;
 import salamander.chesticuffs.game.ChesticuffsGame;
 import salamander.chesticuffs.inventory.ChestKeys;
-import salamander.chesticuffs.playerData.DataLoader;
-import salamander.chesticuffs.toolbar.ToolbarItems;
 
 public class OnChestClick implements Listener {
     private Location arenaChest = new Location(Bukkit.getWorld("lobby"), 0, 199, 0);
@@ -41,7 +39,7 @@ public class OnChestClick implements Listener {
                 chestData.remove(ChestKeys.idKey);
                 return;
             }
-            if(game.isFull()) {
+            if(game.isGameFull()) {
                 return;
             }else{
                 e.setCancelled(true);

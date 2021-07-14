@@ -1,8 +1,7 @@
 package salamander.chesticuffs.game;
 
+import com.google.common.collect.Queues;
 import net.kyori.adventure.text.Component;
-import net.md_5.bungee.chat.SelectorComponentSerializer;
-import org.apache.commons.lang.ObjectUtils;
 import org.bukkit.*;
 import org.bukkit.block.Chest;
 import org.bukkit.enchantments.Enchantment;
@@ -10,13 +9,20 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 import salamander.chesticuffs.ChestManager;
 import salamander.chesticuffs.Chesticuffs;
+import salamander.chesticuffs.MessageLevel;
+import salamander.chesticuffs.game.redstone.NoteBlockAction;
+import salamander.chesticuffs.game.redstone.PistonAction;
+import salamander.chesticuffs.game.redstone.RedstoneAction;
+import salamander.chesticuffs.game.redstone.TNTAction;
 import salamander.chesticuffs.playerData.DataLoader;
 import salamander.chesticuffs.playerData.PlayerData;
 import salamander.chesticuffs.commands.RegisterInventory;
@@ -24,13 +30,14 @@ import salamander.chesticuffs.inventory.ChestKeys;
 import salamander.chesticuffs.inventory.ItemHandler;
 import salamander.chesticuffs.traits.Trait;
 import salamander.chesticuffs.traits.TraitsHolder;
-import salamander.chesticuffs.game.Phase;
 
 import java.util.*;
 
 public class ChesticuffsGame {
     static public final NamespacedKey playerIdKey = new NamespacedKey(Chesticuffs.getPlugin(), "gameId");      //Chests and players store a reference to a ChesticuffsGame object using this key
     static public final NamespacedKey playerInGameKey = new NamespacedKey(Chesticuffs.getPlugin(), "inGame");  //Used to easily check wether a player is in a game or not
+    static public final NamespacedKey redstoneTriggerKey = new NamespacedKey(Chesticuffs.getPlugin(), "triggered");
+
     private final Player playerOne;
     private Player playerTwo;
     private final Chest chest;
@@ -55,6 +62,11 @@ public class ChesticuffsGame {
     boolean lavaBucketCorePlaced = false;
     boolean coalBlockCorePlaced = false;
     boolean saddleCorePlaced = false;
+    Queue<RedstoneAction> redstoneActions;
+
+    static UUID[] staffUUIDs;
+
+    private boolean[] triggered; //Used for redstone items that can only be triggered once per round
 
     private static class sendMessage implements Runnable{
         final Player player;
@@ -89,19 +101,22 @@ public class ChesticuffsGame {
         startTime = System.currentTimeMillis();
         lastActionAt = startTime;
 
+        phase = Phase.CORE_PLACEMENT;
+
+        triggered = new boolean[27];
+
         validationPane = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
         ItemMeta meta = validationPane.getItemMeta();
         meta.displayName(Component.text(ChatColor.GREEN + "Place Item Here"));
         validationPane.setItemMeta(meta);
     }
 
-
-    public boolean isFull(){
+    public boolean isGameFull(){
         return (playerTwo != null);
     }
 
     public void addPlayer(Player player){
-        if(isFull()) return;
+        if(isGameFull()) return;
         playerTwo = player;
         setupGame();
     }
@@ -221,6 +236,8 @@ public class ChesticuffsGame {
             case CORE_PLACEMENT:
                 topLore.add(Component.text( ChatColor.BOLD + "" + ChatColor.GRAY + "Core Placement"));
                 break;
+            case REDSTONE:
+                topLore.add(Component.text(ChatColor.BOLD + "" + ChatColor.GRAY + "Redstone"));
             case OPENING_PHASE:
                 topLore.add(Component.text(ChatColor.BOLD + "" + ChatColor.GRAY + "Item Placement"));
                 break;
@@ -279,7 +296,7 @@ public class ChesticuffsGame {
         return (roundNumber - swapLength) / swapLength % 2 + 1;
     }
 
-    private void broadcastChanges(){
+    public void broadcastChanges(){
         writeToSticks();
         for(int i = 0; i < 27; i++){
             ItemStack item = chest.getBlockInventory().getItem(i);
@@ -509,9 +526,27 @@ public class ChesticuffsGame {
                 }
             }
         }
+
+        playerTwoAmountPlacedThisRound = 0;
+        playerOneAmountPlacedThisRound = 0;
+        playerOneSkipped = false;
+        playerTwoSkipped = false;
+
         doFireDamage();
         broadcastChanges();
         //checkForDraw();
+    }
+
+    public Player getPlayerOne() {
+        return playerOne;
+    }
+
+    public Player getPlayerTwo() {
+        return playerTwo;
+    }
+
+    public Chest getChest() {
+        return chest;
     }
 
     private void doFireDamage(){
@@ -558,9 +593,11 @@ public class ChesticuffsGame {
         }
     }
 
-    private void broadcast(String message){
+    public void broadcast(String message){
         playerOne.sendMessage(message);
-        playerTwo.sendMessage(message);
+        if(playerOne != playerTwo) {
+            playerTwo.sendMessage(message);
+        }
         broadcastToSpectators(message);
     }
 
@@ -592,165 +629,7 @@ public class ChesticuffsGame {
                 coreHealth -= coreDamage;
                 ItemHandler.setLore(chest.getBlockInventory().getItem(entry.getKey()));
             }else{
-                attacker = chest.getSnapshotInventory().getItem(entry.getKey());
-                defender = chest.getSnapshotInventory().getItem(entry.getValue());
-
-                int properAttackerDamage = attacker.getItemMeta().getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
-                int properDefenderDamage = defender.getItemMeta().getPersistentDataContainer().get(ItemHandler.getDamageKey(), PersistentDataType.SHORT);
-                int attackerSlot = entry.getKey();
-                int defenderSlot = entry.getValue();
-
-                int defenderX = entry.getValue() % 9;
-                int defenderY = (int) Math.floor(entry.getValue() / 9);
-                int potentialSoftX[] = new int[] {defenderX + 1, defenderX, defenderX - 1, defenderX};
-                int potentialSoftY[] = new int[] {defenderY, defenderY - 1, defenderY, defenderY + 1};
-
-                for (int i = 0; i < 4; i++){
-                    if(!(potentialSoftX[i] < 0 || potentialSoftX[i] > 8 || potentialSoftY[i] < 0 || potentialSoftY[i] > 2 || potentialSoftX[i] == 4)){
-                        ItemStack potentialDefender = chest.getSnapshotInventory().getItem(potentialSoftY[i] * 9 + potentialSoftX[i]);
-                        if(potentialDefender == null) continue;
-                        if(!potentialDefender.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equalsIgnoreCase("item")) continue;
-                        if(Trait.SOFT.isInItem(potentialDefender)){
-                            broadcast(ChatColor.GREEN + potentialDefender.getType().toString() + " tanks damage for " + defender.getType().toString());
-                            defender = potentialDefender;
-                            break;
-                        }
-                    }
-                }
-
-                int attackerX = attackerSlot % 9;
-                int attackerY = (int) Math.floor(attackerSlot / 9);
-                int potentialSoftXForAttacker[] = new int[] {attackerX + 1, attackerX, attackerX - 1, attackerX};
-                int potentialSoftYForAttacker[] = new int[] {attackerY, attackerY - 1, attackerY, attackerY + 1};
-                System.out.println(attackerX + " " + attackerY);
-
-                for (int i = 0; i < 4; i++){
-                    if(!(potentialSoftXForAttacker[i] < 0 || potentialSoftXForAttacker[i] > 8 || potentialSoftYForAttacker[i] < 0 || potentialSoftYForAttacker[i] > 2 || potentialSoftXForAttacker[i] == 4)){
-                        ItemStack potentialAttacker = chest.getSnapshotInventory().getItem(potentialSoftYForAttacker[i] * 9 + potentialSoftXForAttacker[i]);
-                        if(potentialAttacker == null) continue;
-                        if(!potentialAttacker.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("item")) continue;
-                        if(Trait.SOFT.isInItem(potentialAttacker)){
-                            broadcast(ChatColor.GREEN + potentialAttacker.getType().toString() + " tanks damage for " + defender.getType().toString());
-                            attacker = potentialAttacker;
-                            break;
-                        }
-                    }
-                }
-
-                attackingItemMeta = attacker.getItemMeta();
-                defendingItemMeta = defender.getItemMeta();
-
-                TraitsHolder attackingItemTraits = new TraitsHolder(attackingItemMeta);
-                TraitsHolder defendingItemTraits = new TraitsHolder(defendingItemMeta);
-
-                attackerHP = attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
-                defenderHP = defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
-
-                int attackerDamage = Math.max((properAttackerDamage - defendingItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT)), 0);
-                int defenderDamage = Math.max((properDefenderDamage - attackingItemMeta.getPersistentDataContainer().get(ItemHandler.getDefenceKey(), PersistentDataType.SHORT)), 0);
-
-                //TODO how tf would facade best be implemented
-                // this is the best i can come up with ahhhhhhhhhhhhhhhhhhhhhh
-                if(attackingItemTraits.hasTrait(Trait.FACADE))
-                {
-                    defenderDamage = 0;
-                    broadcast("Due to facade being in play, attacker will deal 0 damage!");
-                }
-                if(defendingItemTraits.hasTrait(Trait.FACADE))
-                {
-                    attackerDamage = 0;
-                    broadcast("Due to facade being in play, defender will deal 0 damage!");
-                }
-
-                if(attackingItemTraits.hasTrait(Trait.FLAME)){
-                    if(defendingItemTraits.hasTrait(Trait.FIRE_RESISTANT)){
-                        attackerDamage = 0;
-                    }else if(defendingItemTraits.hasTrait(Trait.FLAMMABLE)){
-                        attackerDamage *= 2;
-                    }
-                }
-
-                if(defendingItemTraits.hasTrait(Trait.FLAME)){
-                    if(attackingItemTraits.hasTrait(Trait.FIRE_RESISTANT)){
-                        defenderDamage = 0;
-                    }else if(defendingItemTraits.hasTrait(Trait.FLAMMABLE)){
-                        defenderDamage *= 2;
-                    }
-                }
-
-                if(attackingItemTraits.hasTrait(Trait.AQUATIC)){
-                    if(defendingItemTraits.hasTrait(Trait.AQUA_RESISTANT)){
-                        attackerDamage = 0;
-                    }
-                }
-                if(defendingItemTraits.hasTrait(Trait.AQUATIC)){
-                    if(attackingItemTraits.hasTrait(Trait.AQUA_RESISTANT)){
-                        defenderDamage = 0;
-                    }
-                }
-
-                //Although it looks weird, the 2 if statements below handle dealing damage
-                if(!defendingItemTraits.hasTrait(Trait.IMMUNE)) {
-                    defenderHP -= attackerDamage;
-                    broadcast(defenderColor + defender.getType().toString() + ChatColor.GRAY + " (Slot " + attackerSlot + ") " + " takes " +
-                            attackerColor + attackerDamage + ChatColor.GRAY + " damage!");
-                }
-
-                if(!attackingItemTraits.hasTrait(Trait.IMMUNE)) {
-                    attackerHP -= defenderDamage;
-                    broadcast(attackerColor + attacker.getType().toString() + ChatColor.GRAY + " (Slot " + defenderSlot + ") " + " takes " +
-                            defenderColor + defenderDamage + ChatColor.GRAY + " damage!");
-                }
-
-                if(attackerHP <= 0){
-                    if(attackingItemTraits.hasTrait(Trait.BREAK))
-                    {
-
-                    }
-                    if(attackingItemTraits.hasTrait(Trait.SHRAPNEL)){
-                        defenderHP -= 2;
-                    }
-                    if(getCore(getPriority()).getType() == Material.BONE_BLOCK)
-                    {
-                        int[] attackerSpaces;
-                        if(getSideFromSlot(attackerSlot) == 1)
-                        {
-                            attackerSpaces = new int[]{0,1,2,3,9,11,12,18,19,20,21,22};
-                        }
-                        else
-                        {
-                            attackerSpaces = new int[]{5,6,7,8,14,15,17,23,24,25,26};;
-                        }
-                        ItemStack boneBlockRecoil = chest.getSnapshotInventory().getItem(attackerSpaces[new Random().nextInt(24)]);
-                        short recoilItemHP = boneBlockRecoil.getItemMeta().getPersistentDataContainer().get(ItemHandler.getHealthKey(), PersistentDataType.SHORT);
-                        recoilItemHP -= 1;
-                        boneBlockRecoil.getItemMeta().getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, recoilItemHP);
-                    }
-                    chest.getSnapshotInventory().setItem(entry.getKey(), null);
-                }else{
-                    attackingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, attackerHP);
-                }
-
-                if(defenderHP <= 0){
-                    if(defendingItemTraits.hasTrait(Trait.SHRAPNEL)){
-                        attackerHP -= 2;
-                    }
-                    if(defendingItemTraits.hasTrait(Trait.BREAK))
-                    {
-
-                    }
-                    if(getCore(getPriority()).getType() == Material.BONE_BLOCK)
-                    {
-                        attackerHP += 1;
-                        attackingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, attackerHP);
-                    }
-                    chest.getSnapshotInventory().setItem(entry.getValue(), null);
-                }else{
-                    defendingItemMeta.getPersistentDataContainer().set(ItemHandler.getHealthKey(), PersistentDataType.SHORT, defenderHP);
-                }
-
-                attacker.setItemMeta(attackingItemMeta);
-                defender.setItemMeta(defendingItemMeta);
+                doCombatBetween(entry.getKey(), entry.getValue());
             }
         }
 
@@ -1101,6 +980,264 @@ public class ChesticuffsGame {
         }catch (NullPointerException e){ }
     }
 
+    private boolean isValidGameItem(ItemStack item){
+        try{
+            return item.getItemMeta().getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("item");
+        }catch (NullPointerException e){
+            return false;
+        }
+    }
+
+    public int dealDamageTo(int slot, short ATK, boolean isTrueDamage){ //Returns -1 if damage couldn't be dealt, 0 if item was killed otherwise it returns 1
+        ItemStack attackedItem = chest.getSnapshotInventory().getItem(slot);
+
+        if(!isValidGameItem(attackedItem)) return -1;
+
+        ItemMeta meta = attackedItem.getItemMeta();
+        TraitsHolder traits = new TraitsHolder(meta);
+
+        boolean killed;
+        if(isTrueDamage){
+            killed = ItemHandler.dealTrueDamageTo(meta, ATK);
+        }else{
+            killed = ItemHandler.dealDamageTo(meta, ATK);
+        }
+
+        if(killed){
+            killItem(slot);
+            return 0;
+        }else{
+            attackedItem.setItemMeta(meta);
+        }
+
+        return 1;
+    }
+
+    private Integer findTanker(int startSlot){
+        int row = startSlot / 9;
+        int col = startSlot % 9;
+
+        if(row > 0) if(Trait.SOAK.isInItem(chest.getSnapshotInventory().getItem(startSlot - 9))) return startSlot - 9;
+        if(row < 2) if(Trait.SOAK.isInItem(chest.getSnapshotInventory().getItem(startSlot + 9))) return startSlot + 9;
+        if(col > 0) if(Trait.SOAK.isInItem(chest.getSnapshotInventory().getItem(startSlot - 1))) return startSlot - 1;
+        if(col < 8) if(Trait.SOAK.isInItem(chest.getSnapshotInventory().getItem(startSlot + 1))) return startSlot + 1;
+        return null;
+    }
+
+    public void doCombatBetween(int attackerSlot, int defenderSlot){
+        Integer attackerTankerSlot = findTanker(attackerSlot);
+        Integer defenderTankerSlot = findTanker(defenderSlot);
+
+        ItemStack attackerItem = chest.getSnapshotInventory().getItem(attackerSlot);
+        ItemStack defenderItem = chest.getSnapshotInventory().getItem(defenderSlot);
+
+        ItemMeta attackerMeta = attackerItem.getItemMeta();
+        ItemMeta defenderMeta = defenderItem.getItemMeta();
+
+        TraitsHolder attackerTraits = new TraitsHolder(attackerMeta);
+        TraitsHolder defenderTraits = new TraitsHolder(defenderMeta);
+
+        ItemStack attackerTakingDamage = attackerItem;
+        ItemMeta attackerMetaTakingDamage = attackerMeta;
+        TraitsHolder attackerTraitsTakingDamage = attackerTraits;
+        int attackerSlotTakingDamage = attackerSlot;
+        if(attackerTankerSlot != null){
+            attackerSlotTakingDamage = attackerTankerSlot;
+            attackerTakingDamage = chest.getSnapshotInventory().getItem(attackerSlotTakingDamage);
+            attackerMetaTakingDamage = attackerTakingDamage.getItemMeta();
+            attackerTraitsTakingDamage = new TraitsHolder(attackerMetaTakingDamage);
+
+            broadcast(ChatColor.GREEN + attackerTakingDamage.getType().toString() + " (Slot " + attackerSlotTakingDamage + ") tanks damage for " + attackerItem.getType() + " (Slot " + attackerSlot + ")");
+        }
+
+        ItemStack defenderTakingDamage = defenderItem;
+        ItemMeta defenderMetaTakingDamage = defenderMeta;
+        TraitsHolder defenderTraitsTakingDamage = defenderTraits;
+        int defenderSlotTakingDamage = defenderSlot;
+        if(defenderTankerSlot != null){
+            defenderSlotTakingDamage = defenderTankerSlot;
+            defenderTakingDamage = chest.getSnapshotInventory().getItem(defenderSlotTakingDamage);
+            defenderMetaTakingDamage = defenderTakingDamage.getItemMeta();
+            defenderTraitsTakingDamage = new TraitsHolder(defenderMetaTakingDamage);
+
+            broadcast(ChatColor.GREEN + attackerTakingDamage.getType().toString() + " (Slot " + attackerSlotTakingDamage + ") tanks damage for " + attackerItem.getType() + " (Slot " + attackerSlot + ")");
+        }
+
+        short damageToDefender = calculateDamage(defenderMetaTakingDamage, attackerMeta, defenderTraitsTakingDamage, attackerTraits);
+        short damageToAttacker = calculateDamage(attackerMetaTakingDamage, defenderMeta, attackerTraitsTakingDamage, defenderTraits);
+
+        boolean didDefenderDie = dealDamageAndTriggerDetect(defenderSlotTakingDamage, defenderMetaTakingDamage, damageToDefender);
+        boolean didAttackerDie = dealDamageAndTriggerDetect(attackerSlotTakingDamage, attackerMetaTakingDamage, damageToAttacker);
+
+        if(attackerTakingDamage == attackerItem) attackerMeta = attackerMetaTakingDamage;
+        if(defenderTakingDamage == defenderItem) defenderMeta = defenderMetaTakingDamage;
+
+        if(damageToDefender > 0){
+            broadcast(ChatColor.RED + defenderTakingDamage.getType().toString() + " (Slot " + defenderSlotTakingDamage + ") takes " + damageToDefender + " damage!");
+        }
+
+        if(damageToAttacker > 0){
+            broadcast(ChatColor.RED + attackerTakingDamage.getType().toString() + " (Slot " + attackerSlotTakingDamage + ") takes " + damageToAttacker + " damage!");
+        }
+
+        if(didDefenderDie){
+            killItem(defenderSlotTakingDamage);
+
+            if(defenderTraitsTakingDamage.hasTrait(Trait.SHRAPNEL)){
+                didAttackerDie = ItemHandler.dealTrueDamageTo(attackerMeta, (short) 2);
+            }
+
+            if(getCore(getSideFromSlot(attackerSlot)).getType().equals(Material.BONE_BLOCK)){ //When an ally kills an enemy, that ally gains one HP
+                ItemHandler.setHP(attackerMeta, (short) (ItemHandler.getHP(attackerMeta) + 1));
+            }
+
+            if(getCore(getSideFromSlot(defenderSlot)).getType().equals(Material.BONE_BLOCK)){
+                Integer randSlot = getRandomItemFromSide(getSideFromSlot(defenderSlot));
+                if(randSlot != null) {
+                    ItemStack unluckyItem = chest.getSnapshotInventory().getItem(randSlot);
+                    ItemMeta unluckyItemsMeta = unluckyItem.getItemMeta();
+
+                    if(ItemHandler.dealTrueDamageTo(unluckyItemsMeta, (short) 1)){
+                        killItem(randSlot);
+                        broadcast(ChatColor.RED + unluckyItem.getType().toString() + " (Slot " + randSlot + ") was killed because of bone block lol");
+                    }
+
+                    unluckyItem.setItemMeta(unluckyItemsMeta);
+                    ItemHandler.setLore(unluckyItem);
+                }
+            }
+        }
+
+        if(didAttackerDie){
+            killItem(attackerSlotTakingDamage);
+
+            if(attackerTraitsTakingDamage.hasTrait(Trait.SHRAPNEL)){
+                if(ItemHandler.dealTrueDamageTo(defenderMeta, (short) 2) && !didDefenderDie){ //I don't know how else to do this
+                    killItem(defenderSlotTakingDamage);
+
+                    if(defenderTraitsTakingDamage.hasTrait(Trait.SHRAPNEL)){
+                        didAttackerDie = ItemHandler.dealTrueDamageTo(attackerMeta, (short) 2);
+                    }
+
+
+                    if(getCore(getSideFromSlot(attackerSlot)).getType().equals(Material.BONE_BLOCK)){ //When an ally kills an enemy, that ally gains one HP
+                        ItemHandler.setHP(attackerMeta, (short) (ItemHandler.getHP(attackerMeta) + 1));
+                    }
+
+                    if(getCore(getSideFromSlot(defenderSlot)).getType().equals(Material.BONE_BLOCK)){
+                        Integer randSlot = getRandomItemFromSide(getSideFromSlot(defenderSlot));
+                        if(randSlot != null) {
+                            ItemStack unluckyItem = chest.getSnapshotInventory().getItem(randSlot);
+                            ItemMeta unluckyItemsMeta = unluckyItem.getItemMeta();
+
+                            if(ItemHandler.dealTrueDamageTo(unluckyItemsMeta, (short) 1)){
+                                killItem(randSlot);
+                                broadcast(ChatColor.RED + unluckyItem.getType().toString() + " (Slot " + randSlot + ") was killed because of bone block lol");
+                            }
+
+                            unluckyItem.setItemMeta(unluckyItemsMeta);
+                            ItemHandler.setLore(unluckyItem);
+                        }
+                    }
+                }
+            }
+
+            if(getCore(getSideFromSlot(defenderSlot)).getType().equals(Material.BONE_BLOCK)){ //When an ally kills an enemy, that ally gains one HP
+                ItemHandler.setHP(defenderMeta, (short) (ItemHandler.getHP(defenderMeta) + 1));
+            }
+
+            if(getCore(getSideFromSlot(attackerSlot)).getType().equals(Material.BONE_BLOCK)){
+                Integer randSlot = getRandomItemFromSide(getSideFromSlot(attackerSlot));
+                if(randSlot != null) {
+                    ItemStack unluckyItem = chest.getSnapshotInventory().getItem(randSlot);
+                    ItemMeta unluckyItemsMeta = unluckyItem.getItemMeta();
+
+                    if(ItemHandler.dealTrueDamageTo(unluckyItemsMeta, (short) 1)){
+                        killItem(randSlot);
+                        broadcast(ChatColor.RED + unluckyItem.getType().toString() + " (Slot " + randSlot + ") was killed because of bone block lol");
+                    }
+
+                    unluckyItem.setItemMeta(unluckyItemsMeta);
+                    ItemHandler.setLore(unluckyItem);
+                }
+            }
+        }
+
+        attackerItem.setItemMeta(attackerMeta);
+        defenderItem.setItemMeta(defenderMeta);
+
+        ItemHandler.setLore(attackerItem);
+        ItemHandler.setLore(defenderItem);
+
+        if(attackerItem != attackerTakingDamage){
+            attackerTakingDamage.setItemMeta(attackerMetaTakingDamage);
+            ItemHandler.setLore(attackerTakingDamage);
+        }
+
+        if(defenderItem != defenderTakingDamage){
+            defenderTakingDamage.setItemMeta(defenderMetaTakingDamage);
+            ItemHandler.setLore(defenderTakingDamage);
+        }
+    }
+
+    private Integer getRandomItemFromSide(int side){
+        List<Integer> itemsOnSide = new ArrayList<>();
+
+        int lowerBound = side == 1 ? 0 : 5;
+        int upperBound = side == 1 ? 4 : 9;
+
+        for(int row = 0; row < 3; row++){
+            for(int column = lowerBound; column < upperBound; column++){
+                int index = row * 9 + column;
+                ItemStack item = chest.getSnapshotInventory().getItem(index);
+
+                if(isValidGameItem(item)){
+                    itemsOnSide.add(index);
+                }
+            }
+        }
+
+        Random rand = new Random();
+
+        if(itemsOnSide.size() == 0) return null;
+
+        return itemsOnSide.get(rand.nextInt(itemsOnSide.size()));
+    }
+
+    private boolean dealDamageAndTriggerDetect(int slot, ItemMeta meta, short damage){//TODO Actually detect the redstone signal
+        return ItemHandler.dealTrueDamageTo(meta, damage);
+    }
+
+    public short calculateDamage(ItemMeta attackedMeta, ItemMeta attackingMeta, TraitsHolder attackedTraits, TraitsHolder attackingTraits){
+        short baseDamage = ItemHandler.getATK(attackingMeta);
+
+        if(attackingTraits.hasTrait(Trait.FLAME)){
+            if(attackedTraits.hasTrait(Trait.FLAMMABLE)){
+                baseDamage *= 2;
+            }
+
+            if(attackedTraits.hasTrait(Trait.FIRE_RESISTANT)){
+                baseDamage = 0;
+            }
+        }
+
+        if(attackedTraits.hasTrait(Trait.AQUATIC)){
+            if(attackedTraits.hasTrait(Trait.AQUA_RESISTANT)){
+                baseDamage = 0;
+            }
+        }
+
+        if(attackedTraits.hasTrait(Trait.FACADE)){
+            baseDamage = 0;
+        }
+
+        if(attackedTraits.hasTrait(Trait.IMMUNE)){
+            baseDamage = 0;
+        }
+
+        return (short) Math.max(0, baseDamage - ItemHandler.getDEF(attackedMeta));
+    }
+
     private void clearLoreInfoLine(ItemStack item){
         try {
             List<Component> lore = item.getItemMeta().lore();
@@ -1124,24 +1261,24 @@ public class ChesticuffsGame {
     }
 
     public void printGameState(){
-        Chesticuffs.LOGGER.log("########Game State########");
-        Chesticuffs.LOGGER.log("Game Identifier : " + id);
-        Chesticuffs.LOGGER.log("Player One : " + playerOne.getName());
-        Chesticuffs.LOGGER.log("Player Two : " + playerTwo.getName());
-        Chesticuffs.LOGGER.log("Round " + roundNumber + ", Phase " + phase + ", " + (turn == 1 ? "Red" : "Blue") + "'s turn");
-        Chesticuffs.LOGGER.log("Priority: " + (getPriority() == 1 ? "red" : "blue"));
-        Chesticuffs.LOGGER.log("Player One:");
-        try{ Chesticuffs.LOGGER.log("  Skips this phase : " + amountSkipsPlayerOne);}catch (NullPointerException e){}
-        try{ Chesticuffs.LOGGER.log("  Amount placed this round : " + playerOneAmountPlacedThisRound);}catch (NullPointerException e){}
-        try{ Chesticuffs.LOGGER.log("  Skipped : " + playerOneSkipped);}catch (NullPointerException e){}
-        Chesticuffs.LOGGER.log("Player Two:");
-        try{ Chesticuffs.LOGGER.log("  Skips this phase : " + amountSkipsPlayerTwo);}catch (NullPointerException e){}
-        try{ Chesticuffs.LOGGER.log("  Amount placed this round : " + playerTwoAmountPlacedThisRound);}catch (NullPointerException e){}
-        try{ Chesticuffs.LOGGER.log("  Skipped : " + playerTwoSkipped);}catch (NullPointerException e){}
-        try{ Chesticuffs.LOGGER.log("Selected Slot : " + selectedSlot);}catch (NullPointerException e){}
-        try{ Chesticuffs.LOGGER.log("Selected Item : " + selectedItem.getType().toString());}catch (NullPointerException e){}
-        Chesticuffs.LOGGER.log("Pending Usable Selection : " + pendingUsableSelection);
-        try{ Chesticuffs.LOGGER.log("Usable Temporary Data Slot : " + usableTemporarySlot);}catch (NullPointerException e){}
+        Chesticuffs.LOGGER.log("########Game State########", MessageLevel.INFO);
+        Chesticuffs.LOGGER.log("Game Identifier : " + id, MessageLevel.INFO);
+        Chesticuffs.LOGGER.log("Player One : " + playerOne.getName(), MessageLevel.INFO);
+        Chesticuffs.LOGGER.log("Player Two : " + playerTwo.getName(), MessageLevel.INFO);
+        Chesticuffs.LOGGER.log("Round " + roundNumber + ", Phase " + phase + ", " + (turn == 1 ? "Red" : "Blue") + "'s turn", MessageLevel.INFO);
+        Chesticuffs.LOGGER.log("Priority: " + (getPriority() == 1 ? "red" : "blue"), MessageLevel.INFO);
+        Chesticuffs.LOGGER.log("Player One:", MessageLevel.INFO);
+        try{ Chesticuffs.LOGGER.log("  Skips this phase : " + amountSkipsPlayerOne, MessageLevel.INFO);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("  Amount placed this round : " + playerOneAmountPlacedThisRound, MessageLevel.INFO);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("  Skipped : " + playerOneSkipped, MessageLevel.INFO);}catch (NullPointerException e){}
+        Chesticuffs.LOGGER.log("Player Two:", MessageLevel.INFO);
+        try{ Chesticuffs.LOGGER.log("  Skips this phase : " + amountSkipsPlayerTwo, MessageLevel.INFO);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("  Amount placed this round : " + playerTwoAmountPlacedThisRound, MessageLevel.INFO);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("  Skipped : " + playerTwoSkipped, MessageLevel.INFO);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("Selected Slot : " + selectedSlot, MessageLevel.INFO);}catch (NullPointerException e){}
+        try{ Chesticuffs.LOGGER.log("Selected Item : " + selectedItem.getType().toString(), MessageLevel.INFO);}catch (NullPointerException e){}
+        Chesticuffs.LOGGER.log("Pending Usable Selection : " + pendingUsableSelection, MessageLevel.INFO);
+        try{ Chesticuffs.LOGGER.log("Usable Temporary Data Slot : " + usableTemporarySlot, MessageLevel.INFO);}catch (NullPointerException e){}
     }
 
     private void applyTrait(int slot, Trait trait)
@@ -1189,7 +1326,7 @@ public class ChesticuffsGame {
 
         Chesticuffs.LOGGER.log("An item has been selected for a usable. " +
                                "Usable item clicked : " +
-                                clickedItem.getType().toString());
+                                clickedItem.getType().toString(), MessageLevel.DEBUG_INFO);
         boolean succesfullyUsed = false;
         boolean clickedItemDied = false;
         boolean clearSelectedItem = true;
@@ -1273,7 +1410,7 @@ public class ChesticuffsGame {
 
                 Trait trait = (selectedItem.getType() == Material.FLOWER_POT ? Trait.POTTABLE : Trait.STANDABLE);
                 int slotX = slot / 3;
-                Chesticuffs.LOGGER.log("Slot X : " + slotX + ", Turn : " + turn);
+                Chesticuffs.LOGGER.log("Slot X : " + slotX + ", Turn : " + turn, MessageLevel.DEBUG_INFO);
                 if(turn == 1 && slotX > 3) break;
                 if(turn == 2 && slotX < 5) break;
 
@@ -1560,17 +1697,17 @@ public class ChesticuffsGame {
                 }
                 break;*/
             default:
-                Chesticuffs.LOGGER.log("Reached default of usables switch statement");
+                Chesticuffs.LOGGER.log("Reached default of usables switch statement", MessageLevel.ERROR);
         }
 
         if(succesfullyUsed) {
             if(!clickedItemDied) {
-                Chesticuffs.LOGGER.log("Usable didn't make item die!");
+                Chesticuffs.LOGGER.log("Usable didn't make item die!", MessageLevel.DEBUG_INFO);
                 clickedItem.setItemMeta(clickedItemMeta);
                 ItemHandler.setLore(clickedItem);
                 //chest.getSnapshotInventory().setItem(slot, clickedItem);
             }else{
-                Chesticuffs.LOGGER.log("Usable made item die!");
+                Chesticuffs.LOGGER.log("Usable made item die!", MessageLevel.DEBUG_INFO);
                 chest.getSnapshotInventory().setItem(slot, null);
             }
             selectedItem.setAmount(selectedItem.getAmount() - 1);
@@ -1619,6 +1756,14 @@ public class ChesticuffsGame {
         }
     }
 
+    private String getColorFromSide(int side){
+        return side == 1 ? "red" : "blue";
+    }
+
+    private ChatColor getChatColorFromSide(int side){
+        return side == 1 ? ChatColor.RED : ChatColor.BLUE;
+    }
+
     public void placeItem(ItemStack item, int slot){
         ItemStack itemToBePlaced = new ItemStack(item);
         itemToBePlaced.setAmount(1);
@@ -1630,8 +1775,9 @@ public class ChesticuffsGame {
         if(placed) {
             chest.getSnapshotInventory().setItem(slot, itemToBePlaced);
 
+            //TODO This causes an error when placing jumpstart items because of getCore() returning null. Commenting out for now
             //if you're clicking on your side and your core is a music disc...
-            if(getSideFromSlot(slot) == 1)
+            /*if(getSideFromSlot(slot) == 1)
             {
                 //The one time where using the effectidKey is better is when there's multiple variants of the item
                 //Checking if the core is a music disc
@@ -1646,7 +1792,7 @@ public class ChesticuffsGame {
                 {
                     //applyTrait(slot, Trait.RAGE);
                 }
-            }
+            }*/
 
         }
         else{
@@ -1676,7 +1822,10 @@ public class ChesticuffsGame {
         broadcastChanges();
     }
 
-    void nextTurn(){
+    int redstonePlayed = 0;
+
+    void nextTurn(){nextTurn(false);}
+    void nextTurn(boolean skipped){
         switch (phase){
             case CORE_PLACEMENT:
                 if(getCore(1) == null || getCore(2) == null){
@@ -1684,28 +1833,48 @@ public class ChesticuffsGame {
                     if(getCore(turn) != null)
                         turn = 3 - turn;
                 }else{
-                    turn = getPriority();
-                    selectedItem = null;
-                    phase = Phase.OPENING_PHASE;
                     playerOneSkipped = false;
                     playerTwoSkipped = false;
                     amountSkipsPlayerOne = 0;
                     amountSkipsPlayerTwo = 0;
+                    selectedItem = null;
+                    turn = getPriority();
+                    phase = Phase.OPENING_PHASE;
                 }
                 action(false);
                 broadcastChanges();
                 break;
-
+            case REDSTONE:
+                redstonePlayed++;
+                if(redstonePlayed == 2){
+                    triggered = new boolean[27];
+                    playerOneSkipped = false;
+                    playerTwoSkipped = false;
+                    amountSkipsPlayerOne = 0;
+                    amountSkipsPlayerTwo = 0;
+                    selectedItem = null;
+                    turn = getPriority();
+                    phase = Phase.OPENING_PHASE;
+                    broadcast(ChatColor.DARK_PURPLE + "Redstone phase ended!");
+                }else {
+                    turn = 3 - turn;
+                    beginRedstoneTurn(turn);
+                }
+                action(true);
+                broadcastChanges();
+                break;
             case OPENING_PHASE:
             case CLOSING_PHASE:
-                if(turn == 1){
-                    playerOneSkipped = true;
-                    amountSkipsPlayerOne += 1;
-                    playerTwo.sendMessage(ChatColor.RED + "Red" + ChatColor.WHITE +  " skipped. Your turn!");
-                }else{
-                    playerTwoSkipped = true;
-                    amountSkipsPlayerTwo += 1;
-                    playerOne.sendMessage(ChatColor.BLUE + "Blue" + ChatColor.WHITE +  " skipped. Your turn!");
+                if(skipped) {
+                    if (turn == 1) {
+                        playerOneSkipped = true;
+                        amountSkipsPlayerOne += 1;
+                        playerTwo.sendMessage(ChatColor.RED + "Red" + ChatColor.WHITE + " skipped. Your turn!");
+                    } else {
+                        playerTwoSkipped = true;
+                        amountSkipsPlayerTwo += 1;
+                        playerOne.sendMessage(ChatColor.BLUE + "Blue" + ChatColor.WHITE + " skipped. Your turn!");
+                    }
                 }
                 selectedItem = null;
                 if(playerOneSkipped && playerTwoSkipped){
@@ -1719,21 +1888,19 @@ public class ChesticuffsGame {
                         action(true);
                     }else if(phase.equals(Phase.CLOSING_PHASE)){
                         endRound();
-                        phase = Phase.OPENING_PHASE;
+                        phase = Phase.REDSTONE;
                         selectedItem = null;
                         roundNumber += 1;
                         turn = getPriority();
-                        playerOneAmountPlacedThisRound = 0;
-                        playerTwoAmountPlacedThisRound = 0;
-                        playerOneSkipped = false;
-                        playerTwoSkipped = false;
+                        redstonePlayed = 0;
                         broadcast(ChatColor.GREEN + "Round " + roundNumber + " has started!");
                         if(getPriority() == 1){
                             broadcast(ChatColor.RED + "Red Priority");
                         }else{
                             broadcast(ChatColor.BLUE + "Blue Priority");
                         }
-                        action(false);
+                        beginRedstoneTurn(turn);
+                        action(true);
                     }
                 }else {
                     itemPlacementNextTurn();
@@ -1763,35 +1930,254 @@ public class ChesticuffsGame {
                 action(false);
                 break;
         }
+
+        pendingUsableSelection = false;
+        usableTemporarySlot = null;
+        selectedItem = null;
+        selectedSlot = null;
+
+        if(playerOne == playerTwo){
+            if(Chesticuffs.isDebugMode){
+                playerOne.openInventory(turn == 1 ? playerOneInventory : playerTwoInventory);
+                playerOne.sendMessage(Component.text(ChatColor.GRAY + "Auto switching! :)"));
+            }
+        }
     }
 
-    private void powerItem(int slot){
+    @SuppressWarnings("deprecation")
+    static public ItemStack getDropperItem(){
+        Random rand = new Random();
+        int n = rand.nextInt(46);
+
+        if(n <= 0){
+            ItemStack sixtyThreeDiamondAxes = ItemHandler.createItem(Material.DIAMOND_AXE, 63, 10, 3, 8);
+            ItemMeta meta = sixtyThreeDiamondAxes.getItemMeta();
+            meta.addEnchant(Enchantment.LUCK, 0, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            sixtyThreeDiamondAxes.setItemMeta(meta);
+            return sixtyThreeDiamondAxes;
+        }
+
+        n -= 5;
+        if(n <= 0){
+            ItemStack staffHead = ItemHandler.createItem(Material.PLAYER_HEAD, 1, 3, 2, 1);
+            SkullMeta meta = (SkullMeta) staffHead.getItemMeta();
+            int index = rand.nextInt(staff.length);
+            meta.setOwner(staff[index]);
+            staffHead.setItemMeta(meta);
+            return staffHead;
+        }
+
+        n -= 5;
+        if(n <= 0){
+            return ItemHandler.createItem(Material.COD, 1, 1, 0, 1);
+        }
+
+        n -= 5;
+        if(n <= 0){
+            return ItemHandler.createItem(Material.TROPICAL_FISH, 1, 1, 0, 1);
+        }
+
+        n -= 5;
+        if(n <= 0){
+            return ItemHandler.createItem(Material.SALMON, 1, 1, 0, 1);
+        }
+
+        n -= 25;
+        if(n <= 0){
+            return ItemHandler.createItem(Material.DIRT, 1, 1, 0, 1);
+        }
+
+        return null; //TODO Actually implement this
+    }
+
+    private boolean hasAlreadyBeenPowered[] = null;
+    private void powerItem(int slot, boolean reset, boolean triggerNextRound){
+        int roundOffset = triggerNextRound ? 1 : 0;
+
+        Chesticuffs.LOGGER.log("Attempting to power slot " + slot, MessageLevel.DEBUG_INFO);
+        if(reset) {
+            hasAlreadyBeenPowered = new boolean[27];
+            Chesticuffs.LOGGER.log("Resetted already powered list", MessageLevel.DEBUG_INFO);
+        }
+
+        if(hasAlreadyBeenPowered[slot]) {
+            Chesticuffs.LOGGER.log("Slot has already been powered this round", MessageLevel.DEBUG_INFO);
+            return;
+        }
+        hasAlreadyBeenPowered[slot] = true;
+
         ItemStack item = chest.getSnapshotInventory().getItem(slot);
         if(item == null) return;
         ItemMeta meta = item.getItemMeta();
         if(meta == null) return;
-        if(meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING) == "item"){
-            TraitsHolder traits = new TraitsHolder(item);
-            if(!traits.hasTrait(Trait.REDSTONE)) return;
-            if(traits.addTrait(Trait.POWERED)) {
-                //meta.addEnchant(Enchantment.LUCK, 0, true);
-                if(traits.hasTrait(Trait.WIRE)){
-                    int row = slot / 9;
-                    int column = slot % 9;
-                    if(row != 0) powerItem(slot - 1);
-                    if(row != 8) powerItem(slot + 1);
-                    if(column != 0) powerItem(slot - 9);
-                    if(column != 2) powerItem(slot + 9);
+
+        int row = slot / 9;
+        int column = slot % 9;
+
+        Chesticuffs.LOGGER.log("Powering slot " + slot + " ( " + row + ", " + column + " ) ", MessageLevel.DEBUG_INFO);
+        try {
+            if (meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("item")) {
+                TraitsHolder traits = new TraitsHolder(meta);
+                if (!traits.hasTrait(Trait.REDSTONE)) return;
+                if (traits.hasTrait(Trait.WIRE)) {
+                    powerAround(row, column, false, triggerNextRound);
                 }
-                switch(item.getType()){
+                switch (item.getType()) {
+                    case NOTE_BLOCK:
+                    case PISTON:
+                    case STICKY_PISTON:
+                    case TNT:
+                        meta.getPersistentDataContainer().set(redstoneTriggerKey, PersistentDataType.INTEGER, roundNumber + roundOffset); //Trigger key says when it should be triggered
+                        break;
+                    case DROPPER:
+                        int newColumn = column + (column < 4 ? 1 : -1);
+                        if (newColumn != -1 && newColumn != 4 && newColumn != 9) {
+                            int newSlot = slot + (column < 4 ? 1 : -1);
+                            if (chest.getSnapshotInventory().getItem(newSlot) == null) {
+                                chest.getSnapshotInventory().setItem(newSlot, getDropperItem());
+                            }
+                        }
+                        break;
+                    case ACACIA_TRAPDOOR:
+                    case BIRCH_TRAPDOOR:
+                    case CRIMSON_TRAPDOOR:
+                    case DARK_OAK_TRAPDOOR:
+                    case JUNGLE_TRAPDOOR:
+                    case OAK_TRAPDOOR:
+                    case SPRUCE_TRAPDOOR:
+                    case WARPED_TRAPDOOR:
+                        ItemHandler.incrementATK(meta);
+                        break;
+                    case IRON_TRAPDOOR:
+                        ItemHandler.incrementDEF(meta);
+                        break;
                     case DISPENSER:
-                        int direction = 3 - 2 * getSideFromSlot(slot);
+                        int dir = (column < 4 ? 1 : -1);
+                        newColumn = column + dir;
+                        while (newColumn >= 0 && newColumn < 9) {
+                            ItemStack potentialTarget = chest.getSnapshotInventory().getItem(row * 9 + newColumn);
+                            try {
+                                ItemMeta attackedMeta = potentialTarget.getItemMeta();
+                                if (meta.getPersistentDataContainer().has(ItemHandler.getTypeKey(), PersistentDataType.STRING)) {
+                                    if (ItemHandler.dealDamageTo(attackedMeta, ItemHandler.getATK(meta))) {
+                                        if (attackedMeta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING).equals("core")) {
+                                            broadcast(
+                                                    ChatColor.RED + getColorFromSide(getSideFromSlot(slot)) +
+                                                            "'s dispenser killed " +
+                                                            getColorFromSide(getSideFromSlot(row * 9 + newColumn)) +
+                                                            "'s core!"
+                                            );
+                                            endGame(3 - getSideFromSlot(row * 9 + newColumn));
+                                        } else { //A regular item was killed
+                                            killItem(row * 9 + newColumn); //TODO Add notification
+                                        }
+                                    }
+                                    break;
+                                }
+                            } catch (NullPointerException e) {
+                            }
+                            newColumn += dir;
+                        }
+                        break;
+                }
+                traits.setTraitsOf(meta);
+                item.setItemMeta(meta);
+                ItemHandler.setLore(item);
+            }
+        }catch (NullPointerException e){}
+    }
+
+    private void powerAround(int row, int col, boolean reset, boolean triggerNextRound){
+        Chesticuffs.LOGGER.log("Powering around " + row + ", " + col, MessageLevel.DEBUG_INFO);
+        int slot = row * 9 + col;
+        if(col > 0) powerItem(slot - 1, reset, triggerNextRound);
+        if(col < 8) powerItem(slot + 1, false, triggerNextRound);
+        if(row > 0) powerItem(slot - 9, false, triggerNextRound);
+        if(row < 2) powerItem(slot + 9, false, triggerNextRound);
+    }
+
+    private boolean isTriggered(ItemStack item){
+        try{
+            return item.getItemMeta().getPersistentDataContainer().get(redstoneTriggerKey, PersistentDataType.INTEGER) == roundNumber;
+        }catch (NullPointerException e) {
+            return false;
+        }
+    }
+
+    public Queue<RedstoneAction> getRedstoneActions() {
+        return redstoneActions;
+    }
+
+    private void beginRedstoneTurn(int side){
+        redstoneActions = new LinkedList<>();
+
+        int lowerBound = side == 1 ? 0 : 5;
+        int upperBound = side == 1 ? 4 : 9;
+
+        for(int row = 0; row < 3; row++){
+            for(int column = lowerBound; column < upperBound; column++){
+                int index = row * 9 + column;
+                ItemStack item = chest.getSnapshotInventory().getItem(index);
+                if(item == null) continue;
+                switch(item.getType()){
+                    case LEVER:
+                        if(side == getPriority()){
+                            powerAround(row, column, true, false);
+                        }
+                        break;
                 }
             }
-            traits.setTraitsOf(meta);
-            item.setItemMeta(meta);
-            ItemHandler.setLore(item);
         }
+
+        for(int row = 0; row < 3; row++){
+            for(int column = lowerBound; column < upperBound; column++){
+                int index = row * 9 + column;
+
+                ItemStack item = chest.getSnapshotInventory().getItem(index);
+                if(isTriggered(item)){
+                    switch(item.getType()){
+                        case NOTE_BLOCK:
+                            redstoneActions.add(new NoteBlockAction(this, side, index));
+                            break;
+                        case TNT:
+                            redstoneActions.add(new TNTAction(this, side, index));
+                            break;
+                        case STICKY_PISTON:
+                            redstoneActions.add(new PistonAction(this, side, index)); //Lack of break statement is intentional
+                        case PISTON:
+                            redstoneActions.add(new PistonAction(this, side, index));
+                            break;
+                    }
+                }
+            }
+        }
+
+        nextRedstoneAction();
+        chest.update();
+        broadcastChanges();
+    }
+
+    private void nextRedstoneAction(){
+        boolean cont = true;
+        while(cont) {
+            cont = false;
+            if (redstoneActions.isEmpty()) {
+                nextTurn();
+            } else {
+                if (!redstoneActions.peek().startAction()) {
+                    //Action could not start
+                    Chesticuffs.LOGGER.log("Redstone action could not start!", MessageLevel.DEBUG_INFO);
+                    cont = true;
+                }
+                chest.update();
+                broadcastChanges();
+            }
+        }
+    }
+
+    public void killItem(int slot){
+        chest.getSnapshotInventory().setItem(slot, null);
     }
 
     public void handleClickEvent(InventoryClickEvent e){
@@ -1801,7 +2187,7 @@ public class ChesticuffsGame {
 
         if(e.getClickedInventory().equals(playerOneInventory) || e.getClickedInventory().equals(playerTwoInventory))
             if(e.getSlot() == 22) {
-                Chesticuffs.LOGGER.log("Player requested game state dump");
+                Chesticuffs.LOGGER.log("Player requested game state dump", MessageLevel.INFO);
                 printGameState();
             }
 
@@ -1862,21 +2248,7 @@ public class ChesticuffsGame {
                                 playerOne.sendMessage(ChatColor.BLUE + "Blue has placed their core!");
                             }
                             //Next Turn
-                            if(getCore(1) == null || getCore(2) == null){
-                                turn = 3 - turn;
-                                if(getCore(turn) != null)
-                                    turn = 3 - turn;
-                            }else{
-                                turn = getPriority();
-                                selectedItem = null;
-                                phase = Phase.OPENING_PHASE;
-                                playerOneSkipped = false;
-                                playerTwoSkipped = false;
-                                amountSkipsPlayerOne = 0;
-                                amountSkipsPlayerTwo = 0;
-                            }
-                            action(false);
-                            broadcastChanges();
+                            nextTurn();
                         }else if (type.equals("item")){
                             if(turn == 1){
                                 if(playerOneAmountPlacedThisRound >= 3) {
@@ -1916,30 +2288,54 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
+            case REDSTONE:
+                Chesticuffs.LOGGER.log("Player clicked something during redstone phase!", MessageLevel.DEBUG_INFO);
+                if(e.getClickedInventory().equals(currentInv)){
+                    Chesticuffs.LOGGER.log("Player clicked in current inventory", MessageLevel.DEBUG_INFO);
+                    if(redstoneActions.peek().handleClick(e.getSlot())){
+                        redstoneActions.peek().endAction();
+                        Chesticuffs.LOGGER.log("Action Ended", MessageLevel.DEBUG_INFO);
+                        redstoneActions.remove();
+
+                        chest.update();
+                        broadcastChanges();
+
+                        nextRedstoneAction();
+                    }
+                }
+                break;
             case OPENING_PHASE://opening phase
             case CLOSING_PHASE://closing phase
                 if(e.getClickedInventory().equals(player.getInventory())){
+                    Chesticuffs.LOGGER.log("Player has clicked in their inventory!", MessageLevel.DEBUG_INFO);
                     broadcastChanges(); //Clears all virtual green glass panes if there are any (Because the panes aren't in the actual chest)
                     selectedItem = null;
                     ItemStack item = e.getCurrentItem();
                     if(item == null || item.getType() == Material.AIR){
+                        Chesticuffs.LOGGER.log("They clicked on an empty square", MessageLevel.DEBUG_INFO);
                         return;
                     }
                     ItemMeta meta = item.getItemMeta();
                     TraitsHolder itemTraits = new TraitsHolder(meta);
                     if(meta == null){
+                        Chesticuffs.LOGGER.log("The item did not have metadata", MessageLevel.WARNING);
                         return;
                     }
 
                     if(meta.getPersistentDataContainer().equals(null)) {
+                        Chesticuffs.LOGGER.log("There was no PDC", MessageLevel.WARNING);
                         return;
                     }
 
-                    if(meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING) == null) return;
+                    if(meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING) == null) {
+                        Chesticuffs.LOGGER.log("Could not check item's type!", MessageLevel.WARNING);
+                        return;
+                    }
 
                     String itemType = meta.getPersistentDataContainer().get(ItemHandler.getTypeKey(), PersistentDataType.STRING);
 
                     if(itemType.equalsIgnoreCase("core")){
+                        Chesticuffs.LOGGER.log("Player clicked on a core", MessageLevel.DEBUG_INFO);
                         player.sendMessage(ChatColor.RED + "Select an ITEM or a USABLE");
                         return;
                     }
@@ -2016,47 +2412,7 @@ public class ChesticuffsGame {
                             }*/
                         }
                     }else if(e.getSlot() == 13){
-                        if(turn == 1){
-                            playerOneSkipped = true;
-                            amountSkipsPlayerOne += 1;
-                            playerTwo.sendMessage(ChatColor.RED + "Red" + ChatColor.WHITE +  " skipped. Your turn!");
-                        }else{
-                            playerTwoSkipped = true;
-                            amountSkipsPlayerTwo += 1;
-                            playerOne.sendMessage(ChatColor.BLUE + "Blue" + ChatColor.WHITE +  " skipped. Your turn!");
-                        }
-                        selectedItem = null;
-                        if(playerOneSkipped && playerTwoSkipped){
-                            if(phase.equals(Phase.OPENING_PHASE)){
-                                phase = Phase.ATTACKER_SELECTION;
-                                selectedItem = null;
-                                turn = getPriority();
-                                attackersAndDefenders.clear();
-                                attackersSelected = 0;
-                                broadcast( ChatColor.RED + "Attacking phase has started!");
-                                action(true);
-                            }else if(phase.equals(Phase.CLOSING_PHASE)){
-                                endRound();
-                                phase = Phase.OPENING_PHASE;
-                                selectedItem = null;
-                                roundNumber += 1;
-                                turn = getPriority();
-                                playerOneAmountPlacedThisRound = 0;
-                                playerTwoAmountPlacedThisRound = 0;
-                                playerOneSkipped = false;
-                                playerTwoSkipped = false;
-                                broadcast(ChatColor.GREEN + "Round " + roundNumber + " has started!");
-                                if(getPriority() == 1){
-                                    broadcast(ChatColor.RED + "Red Priority");
-                                }else{
-                                    broadcast(ChatColor.BLUE + "Blue Priority");
-                                }
-                                action(false);
-                            }
-                        }else {
-                            itemPlacementNextTurn();
-                        }
-                        broadcastChanges();
+                        nextTurn(true);
                     }else if(selectedItem == null){
                         return;
                     }else if(pendingUsableSelection){
@@ -2064,7 +2420,7 @@ public class ChesticuffsGame {
                         broadcastChanges();
                     }else if(item.equals(validationPane)){
                         placeItem(selectedItem, e.getSlot());
-                        itemPlacementNextTurn();
+                        nextTurn();
                     }else{
                         selectedItem = null;
                         broadcastChanges();
@@ -2077,16 +2433,7 @@ public class ChesticuffsGame {
                 if(e.getClickedInventory().equals(currentInv)){
                     if(e.getSlot() % 9 == 4){
                         if(e.getSlot() == 13){
-                            turn = 3 - turn;
-                            phase = Phase.DEFENDER_SELECTION;
-                            selectedSlot = null;
-                            if(getPriority() == 1){
-                                broadcast(ChatColor.RED + "Red has chosen their attackers!");
-                            }else{
-                                broadcast(ChatColor.BLUE + "Blue has chosen their attackers!");
-                            }
-                            action(true);
-                            broadcastChanges();
+                            nextTurn(true);
                         }
                         return;
                     }
@@ -2154,14 +2501,7 @@ public class ChesticuffsGame {
                     }
                     if(e.getSlot() % 9 == 4){
                         if(e.getSlot() == 13){
-                            phase = Phase.CLOSING_PHASE;
-                            turn = 3 - getPriority();
-                            selectedItem = null;
-                            playerOneSkipped = false;
-                            playerTwoSkipped = false;
-                            broadcastChanges();
-                            combat();
-                            action(false);
+                            nextTurn(true);
                         }
                         return;
                     }
@@ -2259,6 +2599,45 @@ public class ChesticuffsGame {
                     }
                 }
                 break;
+        }
+    }
+
+    public static String[] staff;
+
+    static{
+        staffUUIDs = new UUID[]{
+                UUID.fromString("321b4833-b57e-4092-a309-fdf1ae9c069d"), //BigSalamanderMan
+                UUID.fromString("9db91e76-ffa6-43f2-8a1c-b6539943114e"), //JJMahiro
+                UUID.fromString("1b6f97c6-03ec-42da-8e57-1cab6a237abc"), //PaulTaranto
+                UUID.fromString("f6720fc4-c294-4ffb-b2d3-ebc3d2d36539"), //Sninja
+                UUID.fromString("744c3b2a-5c18-4807-be4d-ccdd672b7391"), //Skeleturge
+                UUID.fromString("af817b9a-b520-48e0-9337-29053bafaceb"), //Taniwha_
+                UUID.fromString("e7186f7a-0a94-4d8b-837d-6ea57b207da5"), //goldenskaz
+                UUID.fromString("45148565-47de-47d8-9fdc-751d843de238"), //illusionWark
+                UUID.fromString("736534e6-0c1e-4211-9068-9ca0f6f86d95"), //TNT_Man3 (Jdrocksu)
+                UUID.fromString("83651b2e-b133-47ba-bf05-6700e5d059a3"), //ScootBoot534
+                UUID.fromString("a7673d79-d577-41bd-a1ee-e7aad0baec16"), //Ted_Nivision (Seefop)
+                UUID.fromString("ee4127ea-9d9a-406c-8227-5d39fbf3ce33"), //SuperMiner
+        };
+
+        staff = new String[]{
+                "BigSalamanderMan",
+                "JJMahiro",
+                "PaulTaranto",
+                "Sninja",
+                "Skeleturge",
+                "Taniwha_",
+                "goldenskaz",
+                "illusionwWark",
+                "TNT_Man3",
+                "ScootBoot534",
+                "Ted_Nivision",
+                "SuperMiner8055"
+        };
+
+        for(int i = 0; i < staffUUIDs.length; i++){
+            System.out.println(staffUUIDs[i]);
+            System.out.println(staffUUIDs[i].getMostSignificantBits());
         }
     }
 }

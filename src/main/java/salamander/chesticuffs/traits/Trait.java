@@ -36,7 +36,6 @@ public enum Trait {
     DYED("Dyed"),
     RAGE("Rage"),
     REDSTONE("Redstone"),
-    POWERED("Powered"),
     WIRE("Wire"),
     SHOOT("Shoot");
 
@@ -69,7 +68,9 @@ public enum Trait {
     }
 
     public boolean isInItem(ItemStack item){
-        return isInMeta(item.getItemMeta());
+        try {
+            return isInMeta(item.getItemMeta());
+        }catch (NullPointerException e){return false;}
     }
 
     public boolean shouldBeDisplayed(){
@@ -77,14 +78,15 @@ public enum Trait {
     }
 
     public boolean isInMeta(ItemMeta meta){
-        int target = this.toInt();
-        int[] traits = meta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.INTEGER_ARRAY);
-        assert traits != null;
-        for(int trait : traits){
-            if(trait == target){
-                return true;
+        try {
+            int target = this.toInt();
+            int[] traits = meta.getPersistentDataContainer().get(ItemHandler.getTraitsKey(), PersistentDataType.INTEGER_ARRAY);
+            for (int trait : traits) {
+                if (trait == target) {
+                    return true;
+                }
             }
-        }
+        }catch (NullPointerException e){}
 
         return false;
     }
